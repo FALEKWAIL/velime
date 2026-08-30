@@ -10,30 +10,23 @@ export default function BrandsBanner() {
   ];
 
   return (
-    <div className={styles.wrapper} id="brands-banner">
-      <div className={styles.label}>Nos inspirations & collections</div>
+    <div className={styles.wrapper} id="brands-banner" aria-label="Inspirations & Collections">
       <div className={styles.track}>
-        {/* Forward scroll */}
-        <div className={styles.row}>
-          <div className={styles.inner}>
-            {[...displayBrands, ...displayBrands].map((brand, i) => (
-              <span key={`fwd-${i}`} className={styles.brand}>
-                {brand}
-                <span className={styles.dot}>·</span>
-              </span>
-            ))}
-          </div>
+        <div className={styles.inner}>
+          {[...displayBrands, ...displayBrands, ...displayBrands].map((brand, i) => (
+            <span key={`b1-${i}`} className={styles.brand}>
+              <span>{brand}</span>
+              <span className={styles.dot}>·</span>
+            </span>
+          ))}
         </div>
-        {/* Reverse scroll */}
-        <div className={styles.row}>
-          <div className={`${styles.inner} ${styles.reverse}`}>
-            {[...displayBrands, ...displayBrands].map((brand, i) => (
-              <span key={`rev-${i}`} className={styles.brandAlt}>
-                <span className={styles.dot}>·</span>
-                {brand}
-              </span>
-            ))}
-          </div>
+        <div className={styles.inner} aria-hidden="true">
+          {[...displayBrands, ...displayBrands, ...displayBrands].map((brand, i) => (
+            <span key={`b2-${i}`} className={styles.brand}>
+              <span>{brand}</span>
+              <span className={styles.dot}>·</span>
+            </span>
+          ))}
         </div>
       </div>
     </div>

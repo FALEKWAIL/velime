@@ -46,6 +46,7 @@ export default function ProductPage({ params }: Props) {
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState('');
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   // Extract gallery images
   const galleryImages = product.images && product.images.length > 0 
@@ -53,6 +54,23 @@ export default function ProductPage({ params }: Props) {
     : [product.image || '/images/p1.jpg'];
 
   const currentImage = galleryImages[selectedImageIndex] || galleryImages[0];
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40 && galleryImages.length > 1) {
+      if (diff > 0) {
+        setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
+      } else {
+        setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   // Stock status evaluation
   const stockStatus = product.stockStatus || (product.inStock ? 'in_stock' : 'total_out');
@@ -122,7 +140,11 @@ export default function ProductPage({ params }: Props) {
            ============================================================ */}
         <div className={styles.imageSection}>
           {/* Main Large Image */}
-          <div className={styles.imageWrapper}>
+          <div
+            className={styles.imageWrapper}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <Image
               src={currentImage}
               alt={product.name}
@@ -142,6 +164,15 @@ export default function ProductPage({ params }: Props) {
             ) : product.isNew ? (
               <span className={styles.badgeNew}>Nouveau</span>
             ) : null}
+
+            {/* Digital Photo Index on Mobile */}
+            {galleryImages.length > 1 && (
+              <div className={styles.digitalPhotoBadge}>
+                <span>{selectedImageIndex + 1}</span>
+                <span className={styles.digitalPhotoSep}>/</span>
+                <span>{galleryImages.length}</span>
+              </div>
+            )}
           </div>
 
           {/* Thumbnail Gallery Row */}

@@ -1,7 +1,7 @@
 import HeroSection from '@/components/HeroSection/HeroSection';
-import BrandsBanner from '@/components/BrandsBanner/BrandsBanner';
 import CategoriesSection from '@/components/CategoriesSection/CategoriesSection';
 import ProductSlider from '@/components/ProductSlider/ProductSlider';
+import BrandsBanner from '@/components/BrandsBanner/BrandsBanner';
 import ReassuranceCarousel from '@/components/ReassuranceCarousel/ReassuranceCarousel';
 import AboutSection from '@/components/AboutSection/AboutSection';
 import InstagramGrid from '@/components/InstagramGrid/InstagramGrid';
@@ -13,9 +13,9 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <BrandsBanner />
       <CategoriesSection />
       <ProductSlider products={bestSellers} title="Meilleure vente" />
+      <BrandsBanner />
       <ReassuranceCarousel />
       <AboutSection />
       <InstagramGrid />
