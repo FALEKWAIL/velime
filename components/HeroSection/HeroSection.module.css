@@ -1,0 +1,187 @@
+.hero {
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Background with parallax */
+.bgWrapper {
+  position: absolute;
+  inset: -15%;
+  will-change: transform;
+}
+
+.bgImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Subtle overlay — NOT too dark, fabric stays visible */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(78, 64, 52, 0.08) 0%,
+    rgba(78, 64, 52, 0.22) 45%,
+    rgba(78, 64, 52, 0.18) 100%
+  );
+  z-index: 1;
+}
+
+/* Centered content */
+.content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 2rem;
+}
+
+.contentVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* "Boutique" label above */
+.preLabel {
+  font-family: var(--font-sans);
+  font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+  font-weight: 400;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 236, 0.85);
+  margin-bottom: 0.75rem;
+  transition: opacity 1.2s ease 0.3s;
+}
+
+/* Main brand name — VELIME */
+.brandName {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(4rem, 14vw, 10rem);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 2px 40px rgba(78, 64, 52, 0.25);
+  margin: 0;
+  /* Subtle text outline for depth */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin divider line */
+.divider {
+  width: 40px;
+  height: 1px;
+  background-color: rgba(245, 242, 236, 0.6);
+  margin: 1.25rem auto;
+}
+
+/* Tagline */
+.tagline {
+  font-family: var(--font-sans);
+  font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+  font-weight: 300;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 236, 0.8);
+  margin-bottom: 2rem;
+}
+
+/* CTA Row */
+.ctaRow {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* CTA Button */
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 236, 0.95);
+  border: 1px solid rgba(245, 242, 236, 0.5);
+  background: rgba(245, 242, 236, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.ctaBtn:hover {
+  background: rgba(245, 242, 236, 0.2);
+  border-color: rgba(245, 242, 236, 0.8);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Scroll indicator */
+.scrollHint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+.scrollLine {
+  display: block;
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent, rgba(245, 242, 236, 0.7));
+}
+
+.scrollText {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 236, 0.6);
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hero {
+    min-height: 100svh;
+  }
+
+  .brandName {
+    letter-spacing: 0.2em;
+  }
+
+  .bgWrapper {
+    inset: -20%;
+  }
+}

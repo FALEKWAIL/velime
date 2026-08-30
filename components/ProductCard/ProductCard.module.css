@@ -1,0 +1,170 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  cursor: pointer;
+  text-decoration: none;
+  animation: fadeIn 0.5s ease both;
+}
+
+.card:hover .image {
+  transform: scale(1.04);
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+/* Arch-shaped image container */
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 130%;
+  border-radius: 50% 50% 0 0 / 12% 12% 0 0;
+  overflow: hidden;
+  background-color: var(--warm-greige);
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Badges */
+.badgeTotalOut {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #c53030;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(197, 48, 48, 0.3);
+}
+
+.badgePartialOut {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #dd6b20;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(221, 107, 32, 0.3);
+}
+
+.badgeCustom {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: var(--deep-mocha);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+.badgeNew {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #2b6cb0;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+/* Hover overlay */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(78, 64, 52, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.overlayText {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #ffffff;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid #ffffff;
+  background-color: rgba(78, 64, 52, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+/* Info */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.name {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.35;
+  transition: color 0.2s ease;
+}
+
+.card:hover .name {
+  color: var(--cozy-walnut);
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--cozy-walnut);
+  direction: rtl;
+}
+
+.originalPrice {
+  font-size: 0.75rem;
+  color: var(--natural-stone);
+  text-decoration: line-through;
+  direction: rtl;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

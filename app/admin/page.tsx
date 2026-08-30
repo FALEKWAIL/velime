@@ -1,0 +1,1655 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { Product, Category, StockStatus, StockVariant } from '@/types';
+import { useSiteData, defaultSiteData } from '@/hooks/useSiteData';
+import {
+  formatPrice,
+  COLOR_PALETTE,
+  getColorHex,
+  generateDefaultStockMatrix,
+  computeStockStatusFromMatrix,
+} from '@/data/products';
+import styles from './admin.module.css';
+
+const ADMIN_PASSWORD = 'velime2024';
+
+const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Taille Unique'];
+
+export default function AdminPage() {
+  const {
+    heroTitle,
+    heroSubtitle,
+    heroCtaText,
+    heroImage,
+    products,
+    categories,
+    brands,
+    saveData,
+  } = useSiteData();
+  
+  const [authed, setAuthed] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [savedMsg, setSavedMsg] = useState('');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'hero' | 'brands'>('products');
+
+  // Filter state for products
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Modals
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  // Form states for Product
+  const [prodForm, setProdForm] = useState<{
+    name: string;
+    slug: string;
+    category: string;
+    price: number;
+    originalPrice: number | '';
+    description: string;
+    sizes: string[];
+    availableSizes: string[];
+    colors: string[];
+    availableColors: string[];
+    stockMatrix: StockVariant[];
+    customColorInput: string;
+    customSizeInput: string;
+    stockStatus: StockStatus;
+    badge: string;
+    isNew: boolean;
+    isBestSeller: boolean;
+    image: string;
+    images: string[];
+    newImageUrl: string;
+  }>({
+    name: '',
+    slug: '',
+    category: '',
+    price: 0,
+    originalPrice: '',
+    description: '',
+    sizes: ['S', 'M', 'L'],
+    availableSizes: ['S', 'M', 'L'],
+    colors: ['Noir', 'Beige'],
+    availableColors: ['Noir', 'Beige'],
+    stockMatrix: generateDefaultStockMatrix(['S', 'M', 'L'], ['Noir', 'Beige'], true),
+    customColorInput: '',
+    customSizeInput: '',
+    stockStatus: 'in_stock',
+    badge: '',
+    isNew: false,
+    isBestSeller: false,
+    image: '/images/p1.jpg',
+    images: ['/images/p1.jpg'],
+    newImageUrl: '',
+  });
+
+  // Form states for Category
+  const [catForm, setCatForm] = useState<{
+    name: string;
+    slug: string;
+    description: string;
+    image: string;
+  }>({
+    name: '',
+    slug: '',
+    description: '',
+    image: '/images/p1.jpg',
+  });
+
+  // Form states for Hero
+  const [heroForm, setHeroForm] = useState({
+    title: '',
+    subtitle: '',
+    ctaText: '',
+    image: '',
+  });
+
+  useEffect(() => {
+    setHeroForm({
+      title: heroTitle || 'VELIME',
+      subtitle: heroSubtitle || "L'élégance au quotidien",
+      ctaText: heroCtaText || 'Découvrir',
+      image: heroImage || '/images/hero-fabric.jpg',
+    });
+  }, [heroTitle, heroSubtitle, heroCtaText, heroImage]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setAuthed(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('Mot de passe incorrect.');
+    }
+  };
+
+  const showNotification = (msg: string) => {
+    setSavedMsg(msg);
+    setTimeout(() => setSavedMsg(''), 4000);
+  };
+
+  const handleSaveHero = () => {
+    saveData({
+      heroTitle: heroForm.title,
+      heroSubtitle: heroForm.subtitle,
+      heroCtaText: heroForm.ctaText,
+      heroImage: heroForm.image,
+      products,
+      categories,
+      brands,
+    });
+    showNotification('Configuration de l\'accueil enregistrée avec succès !');
+  };
+
+  const handleResetDefaults = () => {
+    if (confirm('Voulez-vous réinitialiser toutes les données aux valeurs par défaut ?')) {
+      saveData(defaultSiteData);
+      showNotification('Données réinitialisées aux valeurs par défaut.');
+    }
+  };
+
+  /* ============================================================
+     CATEGORY CRUD
+     ============================================================ */
+  const openNewCategoryModal = () => {
+    setEditingCategory(null);
+    setCatForm({ name: '', slug: '', description: '', image: '/images/p1.jpg' });
+    setIsCategoryModalOpen(true);
+  };
+
+  const openEditCategoryModal = (cat: Category) => {
+    setEditingCategory(cat);
+    setCatForm({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      image: cat.image || '/images/p1.jpg',
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catForm.name.trim()) return;
+
+    const generatedSlug = catForm.slug.trim() || catForm.name.trim().toLowerCase().replace(/\s+/g, '-');
+    const catImage = catForm.image.trim() || '/images/p1.jpg';
+
+    if (editingCategory) {
+      const oldName = editingCategory.name;
+      const updatedCategories = categories.map((c) =>
+        c.id === editingCategory.id
+          ? { ...c, name: catForm.name.trim(), slug: generatedSlug, description: catForm.description.trim(), image: catImage }
+          : c
+      );
+      const updatedProducts = products.map((p) =>
+        p.category === oldName ? { ...p, category: catForm.name.trim() } : p
+      );
+      saveData({
+        heroTitle, heroSubtitle, heroCtaText, heroImage,
+        categories: updatedCategories,
+        products: updatedProducts,
+        brands,
+      });
+      showNotification(`Catégorie « ${catForm.name} » modifiée.`);
+    } else {
+      const newCat: Category = {
+        id: `cat-${Date.now()}`,
+        name: catForm.name.trim(),
+        slug: generatedSlug,
+        description: catForm.description.trim(),
+        image: catImage,
+      };
+      saveData({
+        heroTitle, heroSubtitle, heroCtaText, heroImage,
+        categories: [...categories, newCat],
+        products,
+        brands,
+      });
+      showNotification(`Catégorie « ${catForm.name} » ajoutée.`);
+    }
+
+    setIsCategoryModalOpen(false);
+  };
+
+  const handleDeleteCategory = (catId: string, catName: string) => {
+    const count = products.filter((p) => p.category === catName).length;
+    if (count > 0) {
+      if (!confirm(`La catégorie « ${catName} » contient ${count} article(s). Voulez-vous vraiment la supprimer ?`)) {
+        return;
+      }
+    } else if (!confirm(`Supprimer la catégorie « ${catName} » ?`)) {
+      return;
+    }
+
+    const updatedCategories = categories.filter((c) => c.id !== catId);
+    saveData({
+      heroTitle, heroSubtitle, heroCtaText, heroImage,
+      categories: updatedCategories,
+      products,
+      brands,
+    });
+    showNotification(`Catégorie « ${catName} » supprimée.`);
+  };
+
+  /* Helper to synchronize matrix combinations whenever sizes or colors change */
+  const syncMatrix = (sizes: string[], colors: string[], prevMatrix: StockVariant[]): StockVariant[] => {
+    const effectiveColors = colors.length > 0 ? colors : ['Unique'];
+    const effectiveSizes = sizes.length > 0 ? sizes : ['Taille Unique'];
+    const newMatrix: StockVariant[] = [];
+
+    for (const color of effectiveColors) {
+      for (const size of effectiveSizes) {
+        const existing = prevMatrix.find((v) => v.size === size && v.color === color);
+        newMatrix.push({
+          size,
+          color,
+          inStock: existing !== undefined ? existing.inStock : true,
+        });
+      }
+    }
+    return newMatrix;
+  };
+
+  /* Matrix interactive modifiers */
+  const toggleMatrixCell = (size: string, color: string) => {
+    setProdForm((prev) => {
+      const updated = prev.stockMatrix.map((item) => {
+        if (item.size === size && item.color === color) {
+          return { ...item, inStock: !item.inStock };
+        }
+        return item;
+      });
+      return { ...prev, stockMatrix: updated };
+    });
+  };
+
+  const toggleColorRow = (color: string, setInStock: boolean) => {
+    setProdForm((prev) => {
+      const updated = prev.stockMatrix.map((item) => {
+        if (item.color === color) {
+          return { ...item, inStock: setInStock };
+        }
+        return item;
+      });
+      return { ...prev, stockMatrix: updated };
+    });
+  };
+
+  const toggleSizeColumn = (size: string, setInStock: boolean) => {
+    setProdForm((prev) => {
+      const updated = prev.stockMatrix.map((item) => {
+        if (item.size === size) {
+          return { ...item, inStock: setInStock };
+        }
+        return item;
+      });
+      return { ...prev, stockMatrix: updated };
+    });
+  };
+
+  const setAllMatrixStock = (setInStock: boolean) => {
+    setProdForm((prev) => ({
+      ...prev,
+      stockMatrix: prev.stockMatrix.map((item) => ({ ...item, inStock: setInStock })),
+    }));
+  };
+
+  /* ============================================================
+     PRODUCT CRUD
+     ============================================================ */
+  const openNewProductModal = () => {
+    setEditingProduct(null);
+    const defaultCat = categories.length > 0 ? categories[0].name : 'Robes';
+    const initSizes = ['S', 'M', 'L'];
+    const initColors = ['Noir', 'Beige'];
+
+    setProdForm({
+      name: '',
+      slug: '',
+      category: defaultCat,
+      price: 5000,
+      originalPrice: '',
+      description: '',
+      sizes: initSizes,
+      availableSizes: initSizes,
+      colors: initColors,
+      availableColors: initColors,
+      stockMatrix: generateDefaultStockMatrix(initSizes, initColors, true),
+      customColorInput: '',
+      customSizeInput: '',
+      stockStatus: 'in_stock',
+      badge: '',
+      isNew: true,
+      isBestSeller: false,
+      image: '/images/p1.jpg',
+      images: ['/images/p1.jpg'],
+      newImageUrl: '',
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const openEditProductModal = (p: Product) => {
+    setEditingProduct(p);
+    const pImages = p.images && p.images.length > 0 ? p.images : [p.image];
+    const initialSizes = p.sizes || ['S', 'M', 'L'];
+    const initialColors = p.colors || ['Noir'];
+    const initialMatrix = p.stockMatrix && p.stockMatrix.length > 0
+      ? p.stockMatrix
+      : generateDefaultStockMatrix(initialSizes, initialColors, p.stockStatus !== 'total_out');
+
+    setProdForm({
+      name: p.name,
+      slug: p.slug,
+      category: p.category,
+      price: p.price,
+      originalPrice: p.originalPrice || '',
+      description: p.description,
+      sizes: initialSizes,
+      availableSizes: p.availableSizes || initialSizes,
+      colors: initialColors,
+      availableColors: p.availableColors || initialColors,
+      stockMatrix: initialMatrix,
+      customColorInput: '',
+      customSizeInput: '',
+      stockStatus: p.stockStatus || (p.inStock ? 'in_stock' : 'total_out'),
+      badge: p.badge || '',
+      isNew: Boolean(p.isNew),
+      isBestSeller: Boolean(p.isBestSeller),
+      image: p.image || pImages[0],
+      images: pImages,
+      newImageUrl: '',
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prodForm.name.trim()) return;
+
+    const generatedSlug = prodForm.slug.trim() || prodForm.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const cleanImages = prodForm.images.filter(img => img.trim().length > 0);
+    const mainImage = cleanImages[0] || prodForm.image || '/images/p1.jpg';
+
+    // Compute active matrix
+    let finalMatrix = prodForm.stockMatrix;
+    if (prodForm.stockStatus === 'in_stock') {
+      finalMatrix = finalMatrix.map((m) => ({ ...m, inStock: true }));
+    } else if (prodForm.stockStatus === 'total_out') {
+      finalMatrix = finalMatrix.map((m) => ({ ...m, inStock: false }));
+    }
+
+    // Auto-derive overall stock status and available arrays from matrix
+    const computedStatus = prodForm.stockStatus === 'partial_out'
+      ? computeStockStatusFromMatrix(finalMatrix)
+      : prodForm.stockStatus;
+
+    const finalAvailableSizes = prodForm.sizes.filter((sz) =>
+      finalMatrix.some((m) => m.size === sz && m.inStock)
+    );
+
+    const finalAvailableColors = prodForm.colors.filter((col) =>
+      finalMatrix.some((m) => m.color === col && m.inStock)
+    );
+
+    const isInStock = computedStatus !== 'total_out';
+
+    const productPayload: Product = {
+      id: editingProduct ? editingProduct.id : `prod-${Date.now()}`,
+      name: prodForm.name.trim(),
+      slug: generatedSlug,
+      category: prodForm.category,
+      price: Number(prodForm.price),
+      originalPrice: prodForm.originalPrice ? Number(prodForm.originalPrice) : undefined,
+      description: prodForm.description.trim(),
+      sizes: prodForm.sizes,
+      availableSizes: computedStatus === 'total_out' ? [] : finalAvailableSizes,
+      colors: prodForm.colors,
+      availableColors: computedStatus === 'total_out' ? [] : finalAvailableColors,
+      stockMatrix: finalMatrix,
+      inStock: isInStock,
+      stockStatus: computedStatus,
+      badge: prodForm.badge.trim() || (computedStatus === 'total_out' ? 'Rupture de Stock' : computedStatus === 'partial_out' ? 'Stock Limité' : undefined),
+      isNew: prodForm.isNew,
+      isBestSeller: prodForm.isBestSeller,
+      image: mainImage,
+      images: cleanImages.length > 0 ? cleanImages : [mainImage],
+    };
+
+    if (editingProduct) {
+      const updatedProducts = products.map((p) => (p.id === editingProduct.id ? productPayload : p));
+      saveData({
+        heroTitle, heroSubtitle, heroCtaText, heroImage,
+        categories,
+        products: updatedProducts,
+        brands,
+      });
+      showNotification(`Article « ${prodForm.name} » mis à jour.`);
+    } else {
+      saveData({
+        heroTitle, heroSubtitle, heroCtaText, heroImage,
+        categories,
+        products: [productPayload, ...products],
+        brands,
+      });
+      showNotification(`Article « ${prodForm.name} » créé avec succès.`);
+    }
+
+    setIsProductModalOpen(false);
+  };
+
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    if (!confirm(`Supprimer définitivement l'article « ${productName} » ?`)) return;
+    const updatedProducts = products.filter((p) => p.id !== productId);
+    saveData({
+      heroTitle, heroSubtitle, heroCtaText, heroImage,
+      categories,
+      products: updatedProducts,
+      brands,
+    });
+    showNotification(`Article « ${productName} » supprimé.`);
+  };
+
+  const handleToggleStockQuick = (productId: string, currentStatus: StockStatus) => {
+    const nextStatus: StockStatus = currentStatus === 'in_stock' ? 'partial_out' : currentStatus === 'partial_out' ? 'total_out' : 'in_stock';
+    const updatedProducts = products.map((p) => {
+      if (p.id !== productId) return p;
+      return {
+        ...p,
+        stockStatus: nextStatus,
+        inStock: nextStatus !== 'total_out',
+        badge: nextStatus === 'total_out' ? 'Rupture de Stock' : nextStatus === 'partial_out' ? 'Stock Limité' : undefined,
+        availableSizes: nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? p.sizes.slice(0, 1) : p.sizes),
+        availableColors: nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? (p.colors?.slice(0, 1) || []) : (p.colors || [])),
+      };
+    });
+    saveData({
+      heroTitle, heroSubtitle, heroCtaText, heroImage,
+      categories,
+      products: updatedProducts,
+      brands,
+    });
+    showNotification('Statut de stock mis à jour.');
+  };
+
+  /* Helper methods for custom sizes & colors in modal */
+  const handleAddCustomColor = () => {
+    const color = prodForm.customColorInput.trim();
+    if (!color) return;
+    if (!prodForm.colors.includes(color)) {
+      const updatedColors = [...prodForm.colors, color];
+      setProdForm((f) => ({
+        ...f,
+        colors: updatedColors,
+        availableColors: [...f.availableColors, color],
+        stockMatrix: syncMatrix(f.sizes, updatedColors, f.stockMatrix),
+        customColorInput: '',
+      }));
+    }
+  };
+
+  const handleAddCustomSize = () => {
+    const size = prodForm.customSizeInput.trim().toUpperCase();
+    if (!size) return;
+    if (!prodForm.sizes.includes(size)) {
+      const updatedSizes = [...prodForm.sizes, size];
+      setProdForm((f) => ({
+        ...f,
+        sizes: updatedSizes,
+        availableSizes: [...f.availableSizes, size],
+        stockMatrix: syncMatrix(updatedSizes, f.colors, f.stockMatrix),
+        customSizeInput: '',
+      }));
+    }
+  };
+
+  /* Image helpers for Product modal */
+  const handleAddImageToGallery = () => {
+    if (!prodForm.newImageUrl.trim()) return;
+    setProdForm(prev => ({
+      ...prev,
+      images: [...prev.images, prev.newImageUrl.trim()],
+      newImageUrl: '',
+    }));
+  };
+
+  const handleRemoveImageFromGallery = (index: number) => {
+    setProdForm(prev => {
+      const updated = prev.images.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        images: updated,
+        image: updated[0] || prev.image,
+      };
+    });
+  };
+
+  const handleSetMainImage = (index: number) => {
+    setProdForm(prev => {
+      const selected = prev.images[index];
+      const rest = prev.images.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        image: selected,
+        images: [selected, ...rest],
+      };
+    });
+  };
+
+  /* ============================================================
+     BRANDS CRUD
+     ============================================================ */
+  const handleAddBrand = () => {
+    const name = prompt('Nom de la marque :');
+    if (name?.trim()) {
+      const updated = [...brands, name.trim().toUpperCase()];
+      saveData({
+        heroTitle, heroSubtitle, heroCtaText, heroImage,
+        categories,
+        products,
+        brands: updated,
+      });
+      showNotification(`Marque « ${name.trim().toUpperCase()} » ajoutée.`);
+    }
+  };
+
+  const handleRemoveBrand = (index: number) => {
+    const updated = brands.filter((_, i) => i !== index);
+    saveData({
+      heroTitle, heroSubtitle, heroCtaText, heroImage,
+      categories,
+      products,
+      brands: updated,
+    });
+    showNotification('Marque supprimée du bandeau.');
+  };
+
+  // Filtered products list
+  const filteredProducts = products.filter((p) => {
+    const matchCat = selectedCategoryFilter === 'all' || p.category === selectedCategoryFilter;
+    const matchQuery = !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchQuery;
+  });
+
+  /* ============================================================
+     LOGIN VIEW
+     ============================================================ */
+  if (!authed) {
+    return (
+      <div className={styles.loginPage}>
+        <div className={styles.loginBox}>
+          <div className={styles.loginLogo}>
+            <span className={styles.loginSub}>Espace Gestion</span>
+            <span className={styles.loginMain}>Velime</span>
+          </div>
+          <h1 className={styles.loginTitle}>Administration</h1>
+          <form onSubmit={handleLogin} className={styles.loginForm}>
+            <label htmlFor="admin-password" className={styles.loginLabel}>
+              Code d&apos;accès
+            </label>
+            <input
+              id="admin-password"
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className={styles.loginInput}
+              placeholder="Entrez votre mot de passe"
+              autoComplete="current-password"
+              autoFocus
+            />
+            {passwordError && <p className={styles.loginError}>{passwordError}</p>}
+            <button type="submit" className={styles.loginBtn} id="admin-login-btn">
+              Accéder au Tableau de Bord
+            </button>
+          </form>
+          <p className={styles.loginHint}>Mot de passe par défaut : <strong>velime2024</strong></p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============================================================
+     MAIN DASHBOARD
+     ============================================================ */
+  return (
+    <div className={styles.dashboard}>
+      {/* Sidebar */}
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarLogo}>
+          <span className={styles.sideLogoMain}>Velime</span>
+          <span className={styles.sideLogoLabel}>Administration</span>
+        </div>
+
+        <nav className={styles.sideNav}>
+          <button
+            id="nav-tab-products"
+            className={`${styles.sideNavBtn} ${activeTab === 'products' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('products')}
+          >
+            <BoxIcon />
+            <span>Articles ({products.length})</span>
+          </button>
+
+          <button
+            id="nav-tab-categories"
+            className={`${styles.sideNavBtn} ${activeTab === 'categories' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('categories')}
+          >
+            <FolderIcon />
+            <span>Catégories ({categories.length})</span>
+          </button>
+
+          <button
+            id="nav-tab-hero"
+            className={`${styles.sideNavBtn} ${activeTab === 'hero' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('hero')}
+          >
+            <ImageIcon />
+            <span>Page d&apos;accueil</span>
+          </button>
+
+          <button
+            id="nav-tab-brands"
+            className={`${styles.sideNavBtn} ${activeTab === 'brands' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('brands')}
+          >
+            <TagIcon />
+            <span>Bandeau Marques ({brands.length})</span>
+          </button>
+        </nav>
+
+        <div className={styles.sidebarBottom}>
+          <button onClick={handleResetDefaults} className={styles.resetBtn}>
+            <ResetIcon />
+            <span>Réinitialiser</span>
+          </button>
+          <a href="/" target="_blank" className={styles.viewSite}>
+            <span>Voir le site</span>
+            <ExternalLinkIcon />
+          </a>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className={styles.main}>
+        <header className={styles.topBar}>
+          <div>
+            <h1 className={styles.pageTitle}>
+              {activeTab === 'products' && 'Gestion des Articles, Tailles, Couleurs & Stock'}
+              {activeTab === 'categories' && 'Gestion des Catégories'}
+              {activeTab === 'hero' && 'Personnalisation de la Page d\'Accueil'}
+              {activeTab === 'brands' && 'Bandeau des Marques Inspirantes'}
+            </h1>
+            <p className={styles.pageSubtitle}>
+              {activeTab === 'products' && 'Matrice dynamique Taille × Couleur, multi-photos et ruptures de stock'}
+              {activeTab === 'categories' && 'Ajoutez, modifiez ou supprimez les catégories du catalogue'}
+              {activeTab === 'hero' && 'Modifiez le grand titre, slogan et images principales'}
+              {activeTab === 'brands' && 'Personnalisez les noms affichés dans le bandeau défilant'}
+            </p>
+          </div>
+
+          <div className={styles.topActions}>
+            {savedMsg && <span className={styles.savedMsg}>{savedMsg}</span>}
+            {activeTab === 'products' && (
+              <button className={styles.addPrimaryBtn} onClick={openNewProductModal} id="add-product-main-btn">
+                <PlusIcon />
+                <span>Nouvel Article</span>
+              </button>
+            )}
+            {activeTab === 'categories' && (
+              <button className={styles.addPrimaryBtn} onClick={openNewCategoryModal} id="add-category-main-btn">
+                <PlusIcon />
+                <span>Nouvelle Catégorie</span>
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className={styles.contentArea}>
+          {/* ============================================================
+              TAB: PRODUCTS
+             ============================================================ */}
+          {activeTab === 'products' && (
+            <div className={styles.tabSection}>
+              {/* Filter bar */}
+              <div className={styles.tableControls}>
+                <div className={styles.searchBox}>
+                  <SearchIcon />
+                  <input
+                    type="text"
+                    placeholder="Rechercher un article..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                </div>
+
+                <div className={styles.catFilterGroup}>
+                  <span className={styles.filterLabel}>Filtrer :</span>
+                  <select
+                    value={selectedCategoryFilter}
+                    onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                    className={styles.filterSelect}
+                  >
+                    <option value="all">Toutes les catégories ({products.length})</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name} ({products.filter((p) => p.category === cat.name).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Products Table */}
+              <div className={styles.tableCard}>
+                <div className={styles.tableHeader}>
+                  <span>Article</span>
+                  <span>Catégorie</span>
+                  <span>Prix</span>
+                  <span>Couleurs & Tailles</span>
+                  <span>État du Stock</span>
+                  <span className={styles.textRight}>Actions</span>
+                </div>
+
+                {filteredProducts.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <p>Aucun article trouvé.</p>
+                  </div>
+                ) : (
+                  filteredProducts.map((p) => {
+                    const status = p.stockStatus || (p.inStock ? 'in_stock' : 'total_out');
+                    return (
+                      <div key={p.id} className={styles.tableRow} id={`product-row-${p.id}`}>
+                        {/* Name & Thumb */}
+                        <div className={styles.prodCol}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.image || '/images/p1.jpg'} alt={p.name} className={styles.prodThumb} />
+                          <div>
+                            <p className={styles.prodName}>{p.name}</p>
+                            <p className={styles.prodSlug}>/{p.slug}</p>
+                          </div>
+                        </div>
+
+                        {/* Category */}
+                        <div>
+                          <span className={styles.catBadge}>{p.category}</span>
+                        </div>
+
+                        {/* Price */}
+                        <div>
+                          <p className={styles.priceText}>{formatPrice(p.price)}</p>
+                          {p.originalPrice && (
+                            <span className={styles.oldPriceText}>{formatPrice(p.originalPrice)}</span>
+                          )}
+                        </div>
+
+                        {/* Colors & Sizes display */}
+                        <div className={styles.variantsCol}>
+                          {p.colors && p.colors.length > 0 && (
+                            <div className={styles.colorDotsRow}>
+                              {p.colors.map((c) => (
+                                <span
+                                  key={c}
+                                  className={styles.colorDotBadge}
+                                  style={{ backgroundColor: getColorHex(c) }}
+                                  title={c}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <div className={styles.sizesRowText}>
+                            {p.sizes.join(', ')}
+                          </div>
+                        </div>
+
+                        {/* Stock status */}
+                        <div>
+                          <button
+                            type="button"
+                            className={`${styles.stockStatusBadge} ${
+                              status === 'in_stock'
+                                ? styles.statusInStock
+                                : status === 'partial_out'
+                                ? styles.statusPartialOut
+                                : styles.statusTotalOut
+                            }`}
+                            onClick={() => handleToggleStockQuick(p.id, status)}
+                            title="Cliquez pour changer d'état"
+                          >
+                            <span className={styles.statusDot} />
+                            <span>
+                              {status === 'in_stock' && 'En Stock'}
+                              {status === 'partial_out' && 'Rupture Partielle'}
+                              {status === 'total_out' && 'Rupture Totale'}
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Actions */}
+                        <div className={styles.actionsCol}>
+                          <button
+                            onClick={() => openEditProductModal(p)}
+                            className={styles.actionBtnEdit}
+                            title="Modifier"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id, p.name)}
+                            className={styles.actionBtnDelete}
+                            title="Supprimer"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              TAB: CATEGORIES
+             ============================================================ */}
+          {activeTab === 'categories' && (
+            <div className={styles.tabSection}>
+              <div className={styles.categoriesGrid}>
+                {categories.map((cat) => {
+                  const count = products.filter((p) => p.category === cat.name).length;
+                  const catImage = cat.image || '/images/p1.jpg';
+                  return (
+                    <div key={cat.id} className={styles.categoryCard} id={`cat-card-${cat.id}`}>
+                      <div className={styles.catCardPhotoWrapper}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={catImage} alt={cat.name} className={styles.catCardPhoto} />
+                        <span className={styles.catCountBadge}>{count} article{count !== 1 ? 's' : ''}</span>
+                      </div>
+                      
+                      <div className={styles.catCardBody}>
+                        <div className={styles.catCardHeader}>
+                          <h3 className={styles.catCardTitle}>{cat.name}</h3>
+                        </div>
+                        <p className={styles.catCardSlug}>Slug : /{cat.slug}</p>
+                        {cat.description && (
+                          <p className={styles.catCardDesc}>{cat.description}</p>
+                        )}
+                        <div className={styles.catCardActions}>
+                          <button
+                            onClick={() => openEditCategoryModal(cat)}
+                            className={styles.btnSecondary}
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                            className={styles.btnDanger}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              TAB: HERO & HOME
+             ============================================================ */}
+          {activeTab === 'hero' && (
+            <div className={styles.tabSection}>
+              <div className={styles.twoColLayout}>
+                <div className={styles.card}>
+                  <h2 className={styles.cardSectionTitle}>Textes de la Bannière Principale</h2>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel} htmlFor="hero-name-input">Grand Titre (Nom de Marque)</label>
+                    <input
+                      id="hero-name-input"
+                      className={styles.formInput}
+                      value={heroForm.title}
+                      onChange={(e) => setHeroForm(h => ({ ...h, title: e.target.value }))}
+                      placeholder="Ex: VELIME"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel} htmlFor="hero-sub-input">Sous-titre / Slogan</label>
+                    <input
+                      id="hero-sub-input"
+                      className={styles.formInput}
+                      value={heroForm.subtitle}
+                      onChange={(e) => setHeroForm(h => ({ ...h, subtitle: e.target.value }))}
+                      placeholder="Ex: L'élégance au quotidien"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel} htmlFor="hero-cta-input">Texte du bouton CTA</label>
+                    <input
+                      id="hero-cta-input"
+                      className={styles.formInput}
+                      value={heroForm.ctaText}
+                      onChange={(e) => setHeroForm(h => ({ ...h, ctaText: e.target.value }))}
+                      placeholder="Ex: Découvrir"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel} htmlFor="hero-img-input">Image de fond (URL ou chemin)</label>
+                    <input
+                      id="hero-img-input"
+                      className={styles.formInput}
+                      value={heroForm.image}
+                      onChange={(e) => setHeroForm(h => ({ ...h, image: e.target.value }))}
+                      placeholder="/images/hero-fabric.jpg"
+                    />
+                  </div>
+
+                  <button className={styles.saveHeroBtn} onClick={handleSaveHero}>
+                    Enregistrer la page d&apos;accueil
+                  </button>
+                </div>
+
+                {/* Preview */}
+                <div className={styles.card}>
+                  <h2 className={styles.cardSectionTitle}>Aperçu du Rendu</h2>
+                  <div className={styles.heroLivePreview}>
+                    <div className={styles.previewContent}>
+                      <span className={styles.previewBoutiqueLabel}>Boutique</span>
+                      <h2 className={styles.previewBrandTitle}>{heroForm.title || 'VELIME'}</h2>
+                      <div className={styles.previewLine} />
+                      <p className={styles.previewTagline}>{heroForm.subtitle}</p>
+                      <span className={styles.previewButton}>{heroForm.ctaText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              TAB: BRANDS
+             ============================================================ */}
+          {activeTab === 'brands' && (
+            <div className={styles.tabSection}>
+              <div className={styles.card}>
+                <div className={styles.brandsHeaderRow}>
+                  <div>
+                    <h2 className={styles.cardSectionTitle}>Marques du Bandeau Défilant</h2>
+                    <p className={styles.cardDesc}>Ces marques défilent en continu sous la bannière principale.</p>
+                  </div>
+                  <button onClick={handleAddBrand} className={styles.addPrimaryBtn}>
+                    <PlusIcon />
+                    <span>Ajouter une marque</span>
+                  </button>
+                </div>
+
+                <div className={styles.brandsTagsList}>
+                  {brands.map((brand, i) => (
+                    <div key={i} className={styles.brandTag}>
+                      <span>{brand}</span>
+                      <button
+                        onClick={() => handleRemoveBrand(i)}
+                        className={styles.brandTagRemove}
+                        title={`Supprimer ${brand}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ============================================================
+          MODAL: PRODUCT (ADD / EDIT)
+         ============================================================ */}
+      {isProductModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsProductModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>
+                {editingProduct ? `Modifier l'article « ${editingProduct.name} »` : 'Ajouter un nouvel article'}
+              </h2>
+              <button onClick={() => setIsProductModalOpen(false)} className={styles.modalCloseBtn}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className={styles.modalForm}>
+              <div className={styles.formGridTwo}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Nom de l&apos;article *</label>
+                  <input
+                    required
+                    className={styles.formInput}
+                    value={prodForm.name}
+                    onChange={(e) => setProdForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Ex: Robe Satin Champagne"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Catégorie *</label>
+                  <select
+                    className={styles.formInput}
+                    value={prodForm.category}
+                    onChange={(e) => setProdForm(f => ({ ...f, category: e.target.value }))}
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formGridTwo}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Prix de vente (DZD) *</label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    className={styles.formInput}
+                    value={prodForm.price}
+                    onChange={(e) => setProdForm(f => ({ ...f, price: Number(e.target.value) }))}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Prix d&apos;origine / Barré (Optionnel)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className={styles.formInput}
+                    value={prodForm.originalPrice}
+                    onChange={(e) => setProdForm(f => ({ ...f, originalPrice: e.target.value === '' ? '' : Number(e.target.value) }))}
+                    placeholder="Ex: 8500"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Description de l&apos;article</label>
+                <textarea
+                  rows={3}
+                  className={styles.formTextarea}
+                  value={prodForm.description}
+                  onChange={(e) => setProdForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Coupe, matière, finitions, entretien..."
+                />
+              </div>
+
+              {/* ============================================================
+                  COULEURS DU PRODUIT
+                 ============================================================ */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  Couleurs disponibles pour cet article ({prodForm.colors.length} sélectionnée(s))
+                </label>
+                
+                <div className={styles.colorPillsPalette}>
+                  {COLOR_PALETTE.map((pal) => {
+                    const isSelected = prodForm.colors.includes(pal.name);
+                    return (
+                      <button
+                        key={pal.name}
+                        type="button"
+                        className={`${styles.colorPaletteBtn} ${isSelected ? styles.colorPaletteBtnActive : ''}`}
+                        onClick={() => {
+                          let updated: string[];
+                          if (isSelected) {
+                            updated = prodForm.colors.filter(c => c !== pal.name);
+                          } else {
+                            updated = [...prodForm.colors, pal.name];
+                          }
+                          setProdForm(f => ({
+                            ...f,
+                            colors: updated,
+                            availableColors: updated,
+                            stockMatrix: syncMatrix(f.sizes, updated, f.stockMatrix),
+                          }));
+                        }}
+                      >
+                        <span className={styles.colorPaletteDot} style={{ backgroundColor: pal.hex }} />
+                        <span>{pal.name}</span>
+                        {isSelected && <span className={styles.colorCheckMark}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Adder */}
+                <div className={styles.customAdderRow}>
+                  <input
+                    type="text"
+                    placeholder="Autre couleur (ex: Lilas, Doré, Émeraude)..."
+                    value={prodForm.customColorInput}
+                    onChange={(e) => setProdForm(f => ({ ...f, customColorInput: e.target.value }))}
+                    className={styles.formInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomColor();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomColor}
+                    className={styles.addImageBtn}
+                  >
+                    + Ajouter couleur
+                  </button>
+                </div>
+              </div>
+
+              {/* ============================================================
+                  TAILLES DU PRODUIT
+                 ============================================================ */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  Tailles disponibles pour cet article ({prodForm.sizes.length} sélectionnée(s))
+                </label>
+                
+                <div className={styles.sizePillsRow}>
+                  {DEFAULT_SIZES.map((sz) => {
+                    const isSelected = prodForm.sizes.includes(sz);
+                    return (
+                      <button
+                        key={sz}
+                        type="button"
+                        className={`${styles.sizePillBtn} ${isSelected ? styles.sizePillBtnActive : ''}`}
+                        onClick={() => {
+                          let updatedSizes: string[];
+                          if (isSelected) {
+                            updatedSizes = prodForm.sizes.filter(s => s !== sz);
+                          } else {
+                            updatedSizes = [...prodForm.sizes, sz];
+                          }
+                          setProdForm(f => ({
+                            ...f,
+                            sizes: updatedSizes,
+                            availableSizes: updatedSizes,
+                            stockMatrix: syncMatrix(updatedSizes, f.colors, f.stockMatrix),
+                          }));
+                        }}
+                      >
+                        <span>{sz}</span>
+                        {isSelected && <span className={styles.colorCheckMark}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Size Adder */}
+                <div className={styles.customAdderRow}>
+                  <input
+                    type="text"
+                    placeholder="Autre taille (ex: 38, 40, 42, 3XL)..."
+                    value={prodForm.customSizeInput}
+                    onChange={(e) => setProdForm(f => ({ ...f, customSizeInput: e.target.value }))}
+                    className={styles.formInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSize();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomSize}
+                    className={styles.addImageBtn}
+                  >
+                    + Ajouter taille
+                  </button>
+                </div>
+              </div>
+
+              {/* ============================================================
+                  GESTION DE L'ÉTAT DU STOCK & RUPTURE PARTIELLE
+                 ============================================================ */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>État du Stock & Disponibilité *</label>
+                <div className={styles.stockRadioGroup}>
+                  <label className={`${styles.radioLabel} ${prodForm.stockStatus === 'in_stock' ? styles.radioSelected : ''}`}>
+                    <input
+                      type="radio"
+                      name="stockStatus"
+                      value="in_stock"
+                      checked={prodForm.stockStatus === 'in_stock'}
+                      onChange={() => setProdForm(f => ({
+                        ...f,
+                        stockStatus: 'in_stock',
+                        badge: '',
+                        stockMatrix: f.stockMatrix.map(m => ({ ...m, inStock: true })),
+                      }))}
+                    />
+                    <div>
+                      <strong className={styles.stockGreenText}>🟢 En Stock (Total)</strong>
+                      <p className={styles.stockSubText}>Toutes les tailles et toutes les couleurs sélectionnées sont disponibles</p>
+                    </div>
+                  </label>
+
+                  <label className={`${styles.radioLabel} ${prodForm.stockStatus === 'partial_out' ? styles.radioSelected : ''}`}>
+                    <input
+                      type="radio"
+                      name="stockStatus"
+                      value="partial_out"
+                      checked={prodForm.stockStatus === 'partial_out'}
+                      onChange={() => setProdForm(f => ({ ...f, stockStatus: 'partial_out', badge: 'Stock Limité' }))}
+                    />
+                    <div>
+                      <strong className={styles.stockOrangeText}>🟡 Rupture Partielle (Matrice Taille × Couleur)</strong>
+                      <p className={styles.stockSubText}>Définissez la disponibilité exacte pour chaque croisement Taille / Couleur ci-dessous</p>
+                    </div>
+                  </label>
+
+                  <label className={`${styles.radioLabel} ${prodForm.stockStatus === 'total_out' ? styles.radioSelected : ''}`}>
+                    <input
+                      type="radio"
+                      name="stockStatus"
+                      value="total_out"
+                      checked={prodForm.stockStatus === 'total_out'}
+                      onChange={() => setProdForm(f => ({
+                        ...f,
+                        stockStatus: 'total_out',
+                        badge: 'Rupture de Stock',
+                        stockMatrix: f.stockMatrix.map(m => ({ ...m, inStock: false })),
+                      }))}
+                    />
+                    <div>
+                      <strong className={styles.stockRedText}>🔴 Rupture Totale</strong>
+                      <p className={styles.stockSubText}>Article entièrement indisponible, bouton d&apos;achat bloqué</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* ============================================================
+                  MATRICE CROISÉE TAILLE × COULEUR (RUPTURE PARTIELLE)
+                 ============================================================ */}
+              {prodForm.stockStatus === 'partial_out' && (
+                <div className={styles.matrixBox}>
+                  <div className={styles.matrixHeaderRow}>
+                    <div>
+                      <h4 className={styles.matrixTitle}>Matrice de Disponibilité Croisée</h4>
+                      <p className={styles.matrixSub}>
+                        Cliquez sur une case pour basculer entre <strong>En stock (vert)</strong> et <strong>Épuisé (rouge)</strong>.
+                      </p>
+                    </div>
+
+                    <div className={styles.matrixToolbar}>
+                      <button
+                        type="button"
+                        onClick={() => setAllMatrixStock(true)}
+                        className={styles.matrixToolBtn}
+                      >
+                        ✓ Tout en stock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAllMatrixStock(false)}
+                        className={styles.matrixToolBtn}
+                      >
+                        ✕ Tout épuisé
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.matrixTableWrapper}>
+                    <table className={styles.matrixTable}>
+                      <thead>
+                        <tr>
+                          <th className={styles.matrixThCorner}>Couleur \ Taille</th>
+                          {prodForm.sizes.map((sz) => (
+                            <th key={sz} className={styles.matrixThSize}>
+                              <div className={styles.sizeThHeader}>
+                                <span>{sz}</span>
+                                <div className={styles.thQuickBtns}>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSizeColumn(sz, true)}
+                                    title={`Tout en stock pour ${sz}`}
+                                    className={styles.miniColBtn}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSizeColumn(sz, false)}
+                                    title={`Tout épuisé pour ${sz}`}
+                                    className={styles.miniColBtn}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
+                          <th className={styles.matrixThActions}>Actions Ligne</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {prodForm.colors.map((col) => (
+                          <tr key={col} className={styles.matrixRow}>
+                            <td className={styles.matrixTdColor}>
+                              <div className={styles.matrixColorInfo}>
+                                <span
+                                  className={styles.matrixColorDot}
+                                  style={{ backgroundColor: getColorHex(col) }}
+                                />
+                                <span className={styles.matrixColorName}>{col}</span>
+                              </div>
+                            </td>
+
+                            {prodForm.sizes.map((sz) => {
+                              const variant = prodForm.stockMatrix.find(
+                                (v) => v.size === sz && v.color === col
+                              );
+                              const isCellInStock = variant ? variant.inStock : true;
+
+                              return (
+                                <td key={`${col}-${sz}`} className={styles.matrixTdCell}>
+                                  <button
+                                    type="button"
+                                    className={`${styles.matrixCellBtn} ${
+                                      isCellInStock ? styles.cellInStock : styles.cellOutOfStock
+                                    }`}
+                                    onClick={() => toggleMatrixCell(sz, col)}
+                                    title={`${col} / ${sz} : ${isCellInStock ? 'En stock (cliquez pour épuiser)' : 'Épuisé (cliquez pour remettre en stock)'}`}
+                                  >
+                                    <span className={styles.cellStatusDot} />
+                                    <span className={styles.cellStatusText}>
+                                      {isCellInStock ? 'En stock' : 'Épuisé'}
+                                    </span>
+                                  </button>
+                                </td>
+                              );
+                            })}
+
+                            <td className={styles.matrixTdActions}>
+                              <div className={styles.rowQuickActions}>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleColorRow(col, true)}
+                                  className={styles.rowActionBtn}
+                                  title={`Mettre toutes les tailles en stock pour ${col}`}
+                                >
+                                  Tout ✓
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleColorRow(col, false)}
+                                  className={styles.rowActionBtn}
+                                  title={`Marquer toutes les tailles épuisées pour ${col}`}
+                                >
+                                  Tout ✕
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Multiple Photos Gallery Management */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Galerie Multi-Photos de l&apos;Article ({prodForm.images.length} photo(s))</label>
+                
+                <div className={styles.photosThumbList}>
+                  {prodForm.images.map((imgUrl, idx) => (
+                    <div key={idx} className={styles.photoThumbItem}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imgUrl} alt={`Photo ${idx + 1}`} className={styles.galleryThumbImg} />
+                      <div className={styles.photoThumbActions}>
+                        {idx === 0 ? (
+                          <span className={styles.primaryBadge}>Principale</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetMainImage(idx)}
+                            className={styles.setMainBtn}
+                          >
+                            Définir principale
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImageFromGallery(idx)}
+                          className={styles.deletePhotoBtn}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.addImageRow}>
+                  <input
+                    type="text"
+                    placeholder="URL de la photo (ex: /images/p2.jpg ou https://...)"
+                    value={prodForm.newImageUrl}
+                    onChange={(e) => setProdForm(f => ({ ...f, newImageUrl: e.target.value }))}
+                    className={styles.formInput}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddImageToGallery}
+                    className={styles.addImageBtn}
+                  >
+                    + Ajouter la photo
+                  </button>
+                </div>
+              </div>
+
+              {/* Flags */}
+              <div className={styles.formGridTwo}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Badge Spécial (Optionnel)</label>
+                  <input
+                    className={styles.formInput}
+                    value={prodForm.badge}
+                    onChange={(e) => setProdForm(f => ({ ...f, badge: e.target.value }))}
+                    placeholder="Ex: Nouveau / Promo -20% / Exclusif"
+                  />
+                </div>
+
+                <div className={styles.flagsRow}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={prodForm.isBestSeller}
+                      onChange={(e) => setProdForm(f => ({ ...f, isBestSeller: e.target.checked }))}
+                    />
+                    <span>Afficher en « Meilleure Vente » sur l&apos;accueil</span>
+                  </label>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={prodForm.isNew}
+                      onChange={(e) => setProdForm(f => ({ ...f, isNew: e.target.checked }))}
+                    />
+                    <span>Marquer comme « Nouveau »</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setIsProductModalOpen(false)} className={styles.btnSecondary}>
+                  Annuler
+                </button>
+                <button type="submit" className={styles.btnPrimary}>
+                  {editingProduct ? 'Enregistrer les modifications' : 'Créer l\'article'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          MODAL: CATEGORY (ADD / EDIT)
+         ============================================================ */}
+      {isCategoryModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsCategoryModalOpen(false)}>
+          <div className={styles.modalSmallContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>
+                {editingCategory ? `Modifier la catégorie « ${editingCategory.name} »` : 'Ajouter une nouvelle catégorie'}
+              </h2>
+              <button onClick={() => setIsCategoryModalOpen(false)} className={styles.modalCloseBtn}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveCategory} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Nom de la Catégorie *</label>
+                <input
+                  required
+                  className={styles.formInput}
+                  value={catForm.name}
+                  onChange={(e) => setCatForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Ex: Abayas, Accessoires, Jupes..."
+                  autoFocus
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Slug URL (Optionnel)</label>
+                <input
+                  className={styles.formInput}
+                  value={catForm.slug}
+                  onChange={(e) => setCatForm(f => ({ ...f, slug: e.target.value }))}
+                  placeholder="Ex: abayas-orientales"
+                />
+              </div>
+
+              {/* Photo de la Catégorie */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Photo de la Catégorie (URL ou chemin)</label>
+                <div className={styles.catPhotoInputRow}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={catForm.image || '/images/p1.jpg'} alt="Aperçu" className={styles.catFormThumb} />
+                  <input
+                    className={styles.formInput}
+                    value={catForm.image}
+                    onChange={(e) => setCatForm(f => ({ ...f, image: e.target.value }))}
+                    placeholder="/images/p1.jpg ou URL..."
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Description (Optionnelle)</label>
+                <textarea
+                  rows={2}
+                  className={styles.formTextarea}
+                  value={catForm.description}
+                  onChange={(e) => setCatForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Courte description de la collection..."
+                />
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className={styles.btnSecondary}>
+                  Annuler
+                </button>
+                <button type="submit" className={styles.btnPrimary}>
+                  {editingCategory ? 'Enregistrer' : 'Créer la catégorie'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   CLEAN LUXURY SVG ICONS (NO EMOJIS)
+   ============================================================ */
+function BoxIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ImageIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M1 4v6h6M23 20v-6h-6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="11" cy="11" r="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

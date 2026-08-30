@@ -1,0 +1,196 @@
+/* ============================================================
+   REASSURANCE CAROUSEL & LUXURY TICKER BAR
+   ============================================================ */
+
+.wrapper {
+  width: 100%;
+  background-color: #f5efe6;
+  position: relative;
+  overflow: hidden;
+}
+
+.carouselContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 5.5rem 1.5rem 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+
+.slideContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #bfa17c;
+  margin-bottom: 1.25rem;
+  display: block;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2.85rem;
+  font-weight: 400;
+  color: #1f1914;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.divider {
+  width: 48px;
+  height: 1.5px;
+  background-color: #c9ab82;
+  margin: 1.5rem auto 1.35rem;
+  border-radius: 1px;
+}
+
+.description {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #63574c;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   PAGINATION DOTS
+   ============================================================ */
+.dotsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 2.25rem;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #d6ccbe;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dot:hover {
+  background-color: #bfa17c;
+}
+
+.dotActive {
+  background-color: #c9ab82 !important;
+  transform: scale(1.15);
+}
+
+/* ============================================================
+   BOTTOM CONTINUOUS TICKER BAR
+   ============================================================ */
+.tickerBar {
+  width: 100%;
+  background-color: #eee7dc;
+  border-top: 1px solid #dfd5c4;
+  border-bottom: 1px solid #dfd5c4;
+  padding: 0.85rem 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.tickerTrack {
+  display: flex;
+  width: max-content;
+}
+
+.tickerContent {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 28s linear infinite;
+}
+
+.tickerTrack:hover .tickerContent {
+  animation-play-state: paused;
+}
+
+.tickerItem {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #382e25;
+  padding: 0 1rem;
+}
+
+.tickerBullet {
+  color: #8f7f6f;
+  margin-right: 2rem;
+  font-size: 0.8rem;
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .carouselContainer {
+    padding: 4rem 1.25rem 3rem;
+    min-height: 280px;
+  }
+
+  .title {
+    font-size: 2.1rem;
+  }
+
+  .description {
+    font-size: 0.88rem;
+    max-width: 95%;
+  }
+
+  .tickerItem {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    padding: 0 0.75rem;
+  }
+
+  .tickerBullet {
+    margin-right: 1.5rem;
+  }
+}

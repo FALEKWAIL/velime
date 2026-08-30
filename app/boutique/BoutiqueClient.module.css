@@ -1,0 +1,93 @@
+.page {
+  min-height: 60vh;
+  background-color: var(--soft-ivory);
+}
+
+.heroBar {
+  background-color: var(--warm-greige);
+  padding: 3rem var(--container-px) 2.5rem;
+  text-align: center;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--deep-mocha);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2rem var(--container-px) 4rem;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.filterBtn {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filterBtn:hover {
+  border-color: var(--cozy-walnut);
+  color: var(--cozy-walnut);
+}
+
+.filterActive {
+  background-color: var(--deep-mocha);
+  border-color: var(--deep-mocha);
+  color: var(--soft-ivory);
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}

@@ -1,0 +1,351 @@
+import { createClient } from '@supabase/supabase-js';
+import { Product, Category } from '@/types';
+import { SiteData } from '@/hooks/useSiteData';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+export const isSupabaseConfigured = (): boolean => {
+  return Boolean(
+    supabaseUrl &&
+    supabaseAnonKey &&
+    supabaseUrl.startsWith('https://') &&
+    supabaseAnonKey.length > 20
+  );
+};
+
+export const supabase = isSupabaseConfigured()
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
+// ============================================================
+// DATA MAPPERS (Database Snake_case <-> TypeScript CamelCase)
+// ============================================================
+
+export interface DbProduct {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  original_price?: number | null;
+  image: string;
+  images: string[];
+  category: string;
+  description: string;
+  sizes: string[];
+  available_sizes?: string[] | null;
+  colors?: string[] | null;
+  available_colors?: string[] | null;
+  stock_matrix?: any[] | null;
+  in_stock: boolean;
+  stock_status: string;
+  badge?: string | null;
+  is_new?: boolean | null;
+  is_best_seller?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export function mapDbToProduct(db: DbProduct): Product {
+  return {
+    id: db.id,
+    slug: db.slug,
+    name: db.name,
+    price: Number(db.price),
+    originalPrice: db.original_price ? Number(db.original_price) : undefined,
+    image: db.image,
+    images: Array.isArray(db.images) ? db.images : [db.image],
+    category: db.category,
+    description: db.description || '',
+    sizes: Array.isArray(db.sizes) ? db.sizes : ['S', 'M', 'L'],
+    availableSizes: Array.isArray(db.available_sizes) ? db.available_sizes : undefined,
+    colors: Array.isArray(db.colors) ? db.colors : undefined,
+    availableColors: Array.isArray(db.available_colors) ? db.available_colors : undefined,
+    stockMatrix: Array.isArray(db.stock_matrix) ? db.stock_matrix : undefined,
+    inStock: Boolean(db.in_stock),
+    stockStatus: (db.stock_status as Product['stockStatus']) || (db.in_stock ? 'in_stock' : 'total_out'),
+    badge: db.badge || undefined,
+    isNew: Boolean(db.is_new),
+    isBestSeller: Boolean(db.is_best_seller),
+  };
+}
+
+export function mapProductToDb(p: Product): DbProduct {
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    price: p.price,
+    original_price: p.originalPrice || null,
+    image: p.image,
+    images: p.images && p.images.length > 0 ? p.images : [p.image],
+    category: p.category,
+    description: p.description,
+    sizes: p.sizes || ['S', 'M', 'L'],
+    available_sizes: p.availableSizes || null,
+    colors: p.colors || null,
+    available_colors: p.availableColors || null,
+    stock_matrix: p.stockMatrix || null,
+    in_stock: p.inStock,
+    stock_status: p.stockStatus,
+    badge: p.badge || null,
+    is_new: Boolean(p.isNew),
+    is_best_seller: Boolean(p.isBestSeller),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+// ============================================================
+// SUPABASE CRUD SERVICES
+// ============================================================
+
+export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase fetchProducts error:', error.message);
+      return null;
+    }
+    if (data && data.length > 0) {
+      return data.map(mapDbToProduct);
+    }
+    return null;
+  } catch (err) {
+    console.warn('Supabase fetchProducts exception:', err);
+    return null;
+  }
+}
+
+export async function saveProductToSupabase(product: Product): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const dbPayload = mapProductToDb(product);
+    const { error } = await supabase
+      .from('products')
+      .upsert(dbPayload, { onConflict: 'id' });
+
+    if (error) {
+      console.error('Supabase saveProduct error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase saveProduct exception:', err);
+    return false;
+  }
+}
+
+export async function deleteProductFromSupabase(productId: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', productId);
+
+    if (error) {
+      console.error('Supabase deleteProduct error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase deleteProduct exception:', err);
+    return false;
+  }
+}
+
+export async function fetchCategoriesFromSupabase(): Promise<Category[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.warn('Supabase fetchCategories error:', error.message);
+      return null;
+    }
+    if (data && data.length > 0) {
+      return data.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description || undefined,
+        image: c.image || undefined,
+      }));
+    }
+    return null;
+  } catch (err) {
+    console.warn('Supabase fetchCategories exception:', err);
+    return null;
+  }
+}
+
+export async function saveCategoryToSupabase(category: Category): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .upsert(
+        {
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          description: category.description || null,
+          image: category.image || null,
+        },
+        { onConflict: 'id' }
+      );
+
+    if (error) {
+      console.error('Supabase saveCategory error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase saveCategory exception:', err);
+    return false;
+  }
+}
+
+export async function deleteCategoryFromSupabase(categoryId: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', categoryId);
+
+    if (error) {
+      console.error('Supabase deleteCategory error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase deleteCategory exception:', err);
+    return false;
+  }
+}
+
+export async function fetchSiteSettingsFromSupabase(): Promise<Partial<SiteData> | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('id', 'default')
+      .single();
+
+    if (error) {
+      console.warn('Supabase fetchSiteSettings error:', error.message);
+      return null;
+    }
+    if (data) {
+      return {
+        heroTitle: data.hero_title || undefined,
+        heroSubtitle: data.hero_subtitle || undefined,
+        heroCtaText: data.hero_cta_text || undefined,
+        heroImage: data.hero_image || undefined,
+        brands: Array.isArray(data.brands) ? data.brands : undefined,
+      };
+    }
+    return null;
+  } catch (err) {
+    console.warn('Supabase fetchSiteSettings exception:', err);
+    return null;
+  }
+}
+
+export async function saveSiteSettingsToSupabase(data: {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroCtaText?: string;
+  heroImage?: string;
+  brands?: string[];
+}): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert(
+        {
+          id: 'default',
+          hero_title: data.heroTitle || 'VELIME',
+          hero_subtitle: data.heroSubtitle || "L'élégance au quotidien",
+          hero_cta_text: data.heroCtaText || 'Découvrir',
+          hero_image: data.heroImage || '/images/hero-fabric.jpg',
+          brands: data.brands || [],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+
+    if (error) {
+      console.error('Supabase saveSiteSettings error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase saveSiteSettings exception:', err);
+    return false;
+  }
+}
+
+export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: boolean; message: string }> {
+  if (!supabase) {
+    return { success: false, message: 'Supabase n\'est pas encore configuré dans le fichier .env.local.' };
+  }
+  try {
+    // 1. Categories
+    const categoriesPayload = siteData.categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description || null,
+      image: c.image || null,
+    }));
+    if (categoriesPayload.length > 0) {
+      const { error: catErr } = await supabase.from('categories').upsert(categoriesPayload, { onConflict: 'id' });
+      if (catErr) throw new Error(`Erreur catégories: ${catErr.message}`);
+    }
+
+    // 2. Products
+    const productsPayload = siteData.products.map(mapProductToDb);
+    if (productsPayload.length > 0) {
+      const { error: prodErr } = await supabase.from('products').upsert(productsPayload, { onConflict: 'id' });
+      if (prodErr) throw new Error(`Erreur articles: ${prodErr.message}`);
+    }
+
+    // 3. Settings
+    const { error: setErr } = await supabase.from('site_settings').upsert(
+      {
+        id: 'default',
+        hero_title: siteData.heroTitle,
+        hero_subtitle: siteData.heroSubtitle,
+        hero_cta_text: siteData.heroCtaText,
+        hero_image: siteData.heroImage,
+        brands: siteData.brands,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+    if (setErr) throw new Error(`Erreur paramètres: ${setErr.message}`);
+
+    return {
+      success: true,
+      message: `Synchronisation réussie ! (${siteData.products.length} articles, ${siteData.categories.length} catégories).`,
+    };
+  } catch (err: any) {
+    console.error('SyncAllToSupabase failed:', err);
+    return {
+      success: false,
+      message: err.message || 'Une erreur est survenue lors de la synchronisation.',
+    };
+  }
+}

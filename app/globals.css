@@ -1,40 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* ============================================================
+   CSS DESIGN TOKENS
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --soft-ivory: #F5F2EC;
+  --natural-stone: #B7A996;
+  --warm-greige: #D9D2C6;
+  --cozy-walnut: #8C7864;
+  --deep-mocha: #4E4034;
+
+  --bg-primary: var(--soft-ivory);
+  --bg-secondary: var(--warm-greige);
+  --bg-header: var(--natural-stone);
+  --bg-dark: var(--deep-mocha);
+  --text-primary: var(--deep-mocha);
+  --text-secondary: var(--cozy-walnut);
+  --text-muted: var(--natural-stone);
+  --accent: var(--cozy-walnut);
+  --border-color: rgba(78, 64, 52, 0.12);
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --section-py: 5rem;
+  --container-px: 1.5rem;
+  --max-width: 1200px;
+
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Text on dark backgrounds → white */
+  --text-on-dark: #ffffff;
+  /* Text on light backgrounds → mocha */
+  --text-on-light: var(--deep-mocha);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
 }
 
 body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 a {
@@ -42,8 +74,264 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  /* Mobile: prevent blue flash on tap */
+  -webkit-tap-highlight-color: transparent;
+}
+
+ul, ol { list-style: none; }
+
+/* ============================================================
+   LAYOUT UTILITIES
+   ============================================================ */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-px);
+}
+
+.section {
+  padding: var(--section-py) 0;
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.heading-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.heading-section {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.label-caps {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   ADAPTIVE TEXT COLORS (Dark/Light BG Rules)
+   ============================================================ */
+
+/* Dark background sections → white text */
+.bg-dark,
+[data-bg="dark"] {
+  --text-adaptive: #ffffff;
+  --text-adaptive-muted: rgba(245, 242, 236, 0.75);
+  --border-adaptive: rgba(245, 242, 236, 0.15);
+}
+
+/* Light background sections → mocha text */
+.bg-light,
+[data-bg="light"] {
+  --text-adaptive: var(--deep-mocha);
+  --text-adaptive-muted: var(--cozy-walnut);
+  --border-adaptive: var(--border-color);
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.visible {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.delay-1 { transition-delay: 0.08s; }
+.delay-2 { transition-delay: 0.16s; }
+.delay-3 { transition-delay: 0.24s; }
+.delay-4 { transition-delay: 0.32s; }
+.delay-5 { transition-delay: 0.4s; }
+.delay-6 { transition-delay: 0.48s; }
+.delay-7 { transition-delay: 0.56s; }
+.delay-8 { transition-delay: 0.64s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background-color: var(--deep-mocha);
+  color: var(--soft-ivory);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--deep-mocha);
+  transition: var(--transition);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Touch-friendly min height */
+  min-height: 48px;
+}
+
+.btn-primary:hover {
+  background-color: var(--cozy-walnut);
+  border-color: var(--cozy-walnut);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background-color: transparent;
+  color: var(--deep-mocha);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--deep-mocha);
+  transition: var(--transition);
+  cursor: pointer;
+  min-height: 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-outline:hover {
+  background-color: var(--deep-mocha);
+  color: var(--soft-ivory);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  transition: var(--transition);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.btn-ghost:hover {
+  color: var(--cozy-walnut);
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--soft-ivory); }
+::-webkit-scrollbar-thumb { background: var(--natural-stone); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cozy-walnut); }
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+@media (max-width: 1024px) {
+  :root { --container-px: 1.25rem; }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --section-py: 3rem;
+    --container-px: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --section-py: 2.5rem;
+    --container-px: 0.875rem;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
+    min-height: 52px;
+  }
+}
+
+/* ============================================================
+   TOUCH IMPROVEMENTS
+   ============================================================ */
+@media (hover: none) {
+  /* Remove hover states on touch devices */
+  .btn-primary:hover,
+  .btn-outline:hover {
+    transform: none;
+  }
+}
+
+/* Safe area for notch phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .footer-bottom {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 }

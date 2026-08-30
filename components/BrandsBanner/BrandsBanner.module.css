@@ -1,0 +1,82 @@
+.wrapper {
+  background-color: var(--warm-greige);
+  padding: 2rem 0;
+  overflow: hidden;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.label {
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cozy-walnut);
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  overflow: hidden;
+  width: 100%;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: scrollForward 28s linear infinite;
+}
+
+.reverse {
+  animation: scrollReverse 32s linear infinite;
+}
+
+.brand,
+.brandAlt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-serif);
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: var(--deep-mocha);
+  padding: 0 1rem;
+  opacity: 0.75;
+  transition: opacity 0.3s ease;
+}
+
+.brand:hover,
+.brandAlt:hover {
+  opacity: 1;
+}
+
+.dot {
+  color: var(--natural-stone);
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+@keyframes scrollForward {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes scrollReverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+/* Pause on hover */
+.row:hover .inner {
+  animation-play-state: paused;
+}

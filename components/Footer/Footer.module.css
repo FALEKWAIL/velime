@@ -1,0 +1,138 @@
+.footer {
+  background-color: var(--soft-ivory);
+  border-top: 1px solid var(--border-color);
+}
+
+.inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3.5rem var(--container-px) 2.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+}
+
+.logoSub {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.logoMain {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--deep-mocha);
+  line-height: 1;
+}
+
+.tagline {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 300px;
+}
+
+/* Navigation columns */
+.navColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.navCol {}
+
+.colTitle {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.colList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footLink {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.footLink:hover {
+  color: var(--deep-mocha);
+  padding-left: 4px;
+}
+
+.footText {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: var(--natural-stone);
+}
+
+/* Bottom bar */
+.bottom {
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem var(--container-px);
+  text-align: center;
+}
+
+.copyright {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--natural-stone);
+  letter-spacing: 0.04em;
+}
+
+.adminLinkWrapper {
+  margin-top: 0.5rem;
+}
+
+.adminFootLink {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--cozy-walnut);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.adminFootLink:hover {
+  opacity: 1;
+  color: var(--deep-mocha);
+}
+
+@media (min-width: 768px) {
+  .inner {
+    grid-template-columns: 1fr 2fr;
+  }
+}

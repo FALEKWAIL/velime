@@ -1,0 +1,41 @@
+.banner {
+  background-color: var(--deep-mocha);
+  overflow: hidden;
+  padding: 1rem 0;
+}
+
+.track {
+  overflow: hidden;
+  width: 100%;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: marquee 25s linear infinite;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--soft-ivory);
+  padding: 0 1rem;
+  opacity: 0.9;
+}
+
+.dot {
+  color: var(--natural-stone);
+  opacity: 0.6;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.333%); }
+}

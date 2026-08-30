@@ -1,0 +1,96 @@
+.section {
+  background-color: var(--soft-ivory);
+  padding: 3rem 0 0;
+}
+
+.header {
+  text-align: center;
+  padding: 0 var(--container-px) 2rem;
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cozy-walnut);
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.handle {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: var(--cozy-walnut);
+  transition: var(--transition);
+}
+
+.handle:hover {
+  color: var(--deep-mocha);
+}
+
+/* Photo grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+
+.photoLink {
+  display: block;
+}
+
+.photoWrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  overflow: hidden;
+  background-color: var(--warm-greige);
+}
+
+.photo {
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.photoOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(78, 64, 52, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+.photoLink:hover .photo {
+  transform: scale(1.06);
+}
+
+.photoLink:hover .photoOverlay {
+  opacity: 1;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
