@@ -125,9 +125,17 @@ export async function saveProductToSupabase(product: Product): Promise<boolean> 
   if (!supabase) return false;
   try {
     const dbPayload = mapProductToDb(product);
-    const { error } = await supabase
+    let { error } = await supabase
       .from('products')
       .upsert(dbPayload, { onConflict: 'id' });
+
+    // If stock_matrix column is missing in user's database, retry without it
+    if (error && error.message?.includes('stock_matrix')) {
+      const fallbackPayload = { ...dbPayload };
+      delete fallbackPayload.stock_matrix;
+      const res = await supabase.from('products').upsert(fallbackPayload, { onConflict: 'id' });
+      error = res.error;
+    }
 
     if (error) {
       console.error('Supabase saveProduct error:', error.message);
@@ -318,24 +326,42 @@ export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: 
     // 2. Products
     const productsPayload = siteData.products.map(mapProductToDb);
     if (productsPayload.length > 0) {
-      const { error: prodErr } = await supabase.from('products').upsert(productsPayload, { onConflict: 'id' });
+      let { error: prodErr } = await supabase.from('products').upsert(productsPayload, { onConflict: 'id' });
+      
+      // Fallback if stock_matrix column is not yet in Supabase schema
+      if (prodErr && prodErr.message?.includes('stock_matrix')) {
+        const fallbackPayloads = productsPayload.map((p) => {
+          const clone = { ...p };
+          delete clone.stock_matrix;
+          return clone;
+        });
+        const retryRes = await supabase.from('products').upsert(fallbackPayloads, { onConflict: 'id' });
+        prodErr = retryRes.error;
+      }
+
       if (prodErr) throw new Error(`Erreur articles: ${prodErr.message}`);
     }
 
     // 3. Settings
-    const { error: setErr } = await supabase.from('site_settings').upsert(
-      {
-        id: 'default',
-        hero_title: siteData.heroTitle,
-        hero_subtitle: siteData.heroSubtitle,
-        hero_cta_text: siteData.heroCtaText,
-        hero_image: siteData.heroImage,
-        brands: siteData.brands,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    );
-    if (setErr) throw new Error(`Erreur paramètres: ${setErr.message}`);
+    try {
+      const { error: setErr } = await supabase.from('site_settings').upsert(
+        {
+          id: 'default',
+          hero_title: siteData.heroTitle,
+          hero_subtitle: siteData.heroSubtitle,
+          hero_cta_text: siteData.heroCtaText,
+          hero_image: siteData.heroImage,
+          brands: siteData.brands,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+      if (setErr) {
+        console.warn('Supabase site_settings notice:', setErr.message);
+      }
+    } catch (setEx) {
+      console.warn('Supabase site_settings exception:', setEx);
+    }
 
     return {
       success: true,

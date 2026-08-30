@@ -134,6 +134,97 @@ export default function AdminPage() {
     setTimeout(() => setSavedMsg(''), 4000);
   };
 
+  const [heroDragActive, setHeroDragActive] = useState(false);
+
+  const processImageFile = (file: File, callback: (dataUrl: string) => void) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner un fichier image valide (JPG, PNG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawUrl = e.target?.result as string;
+      if (!rawUrl) return;
+
+      const img = document.createElement('img');
+      img.onload = () => {
+        const maxWidth = 1400;
+        const maxHeight = 1400;
+        let { width, height } = img;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          callback(compressed);
+        } else {
+          callback(rawUrl);
+        }
+      };
+      img.onerror = () => callback(rawUrl);
+      img.src = rawUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file, (dataUrl) => {
+        setHeroForm((h) => ({ ...h, image: dataUrl }));
+        showNotification('Photo de fond chargée ! Cliquez sur Enregistrer pour valider.');
+      });
+    }
+  };
+
+  const handleHeroDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setHeroDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file, (dataUrl) => {
+        setHeroForm((h) => ({ ...h, image: dataUrl }));
+        showNotification('Photo de fond chargée ! Cliquez sur Enregistrer pour valider.');
+      });
+    }
+  };
+
+  const handleProductFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      processImageFile(file, (dataUrl) => {
+        setProdForm((prev) => ({
+          ...prev,
+          images: [...prev.images, dataUrl],
+          image: prev.images.length === 0 ? dataUrl : prev.image,
+        }));
+      });
+    });
+  };
+
+  const handleCategoryFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file, (dataUrl) => {
+        setCatForm((c) => ({ ...c, image: dataUrl }));
+      });
+    }
+  };
+
   const handleSaveHero = () => {
     saveData({
       heroTitle: heroForm.title,
@@ -946,14 +1037,54 @@ export default function AdminPage() {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel} htmlFor="hero-img-input">Image de fond (URL ou chemin)</label>
-                    <input
-                      id="hero-img-input"
-                      className={styles.formInput}
-                      value={heroForm.image}
-                      onChange={(e) => setHeroForm(h => ({ ...h, image: e.target.value }))}
-                      placeholder="/images/hero-fabric.jpg"
-                    />
+                    <label className={styles.formLabel}>Photo de Fond Principale *</label>
+                    <div
+                      className={`${styles.photoUploadDropzone} ${heroDragActive ? styles.dropzoneActive : ''}`}
+                      onDragOver={(e) => { e.preventDefault(); setHeroDragActive(true); }}
+                      onDragLeave={() => setHeroDragActive(false)}
+                      onDrop={handleHeroDrop}
+                    >
+                      {heroForm.image ? (
+                        <div className={styles.uploadedPreviewContainer}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={heroForm.image} alt="Aperçu Bannière" className={styles.uploadedHeroImg} />
+                          <div className={styles.uploadedOverlayActions}>
+                            <label className={styles.uploadBtnOverlay}>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleHeroFileUpload}
+                                style={{ display: 'none' }}
+                              />
+                              <span>📷 Changer la photo</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setHeroForm(h => ({ ...h, image: '/images/hero-fabric.jpg' }))}
+                              className={styles.resetPhotoBtn}
+                            >
+                              Réinitialiser
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className={styles.dropzoneLabel}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHeroFileUpload}
+                            style={{ display: 'none' }}
+                          />
+                          <div className={styles.dropzoneContent}>
+                            <UploadIcon />
+                            <p className={styles.dropzoneMainText}>
+                              Cliquez pour choisir une photo ou glissez-déposez ici
+                            </p>
+                            <span className={styles.dropzoneSubText}>JPG, PNG, WEBP acceptés</span>
+                          </div>
+                        </label>
+                      )}
+                    </div>
                   </div>
 
                   <button className={styles.saveHeroBtn} onClick={handleSaveHero}>
@@ -1443,20 +1574,34 @@ export default function AdminPage() {
                 </div>
 
                 <div className={styles.addImageRow}>
-                  <input
-                    type="text"
-                    placeholder="URL de la photo (ex: /images/p2.jpg ou https://...)"
-                    value={prodForm.newImageUrl}
-                    onChange={(e) => setProdForm(f => ({ ...f, newImageUrl: e.target.value }))}
-                    className={styles.formInput}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddImageToGallery}
-                    className={styles.addImageBtn}
-                  >
-                    + Ajouter la photo
-                  </button>
+                  <label className={styles.directUploadBtn}>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleProductFilesUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <UploadIcon />
+                    <span>📁 Télécharger des photos</span>
+                  </label>
+
+                  <div className={styles.urlInputRow}>
+                    <input
+                      type="text"
+                      placeholder="Ou URL de la photo..."
+                      value={prodForm.newImageUrl}
+                      onChange={(e) => setProdForm(f => ({ ...f, newImageUrl: e.target.value }))}
+                      className={styles.formInput}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddImageToGallery}
+                      className={styles.addImageBtn}
+                    >
+                      + Ajouter URL
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1543,10 +1688,20 @@ export default function AdminPage() {
 
               {/* Photo de la Catégorie */}
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Photo de la Catégorie (URL ou chemin)</label>
+                <label className={styles.formLabel}>Photo de la Catégorie</label>
                 <div className={styles.catPhotoInputRow}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={catForm.image || '/images/p1.jpg'} alt="Aperçu" className={styles.catFormThumb} />
+                  <label className={styles.directUploadBtn}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCategoryFileUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <UploadIcon />
+                    <span>📁 Télécharger une photo</span>
+                  </label>
                   <input
                     className={styles.formInput}
                     value={catForm.image}
@@ -1650,6 +1805,14 @@ function SearchIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <circle cx="11" cy="11" r="8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
