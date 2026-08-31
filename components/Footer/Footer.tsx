@@ -1,10 +1,17 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSiteData } from '@/hooks/useSiteData';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+  const pathname = usePathname();
   const { categories } = useSiteData();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   const displayCategories = categories && categories.length > 0 ? categories : [
     { id: '1', name: 'Robes', slug: 'robes' },
     { id: '2', name: 'Ensembles', slug: 'ensembles' },

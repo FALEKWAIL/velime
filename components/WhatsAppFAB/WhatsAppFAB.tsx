@@ -1,7 +1,13 @@
 'use client';
+import { usePathname } from 'next/navigation';
 import styles from './WhatsAppFAB.module.css';
 
 export default function WhatsAppFAB() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
   return (
     <a
       href="https://wa.me/213000000000"

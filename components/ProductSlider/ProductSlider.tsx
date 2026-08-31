@@ -94,49 +94,6 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
 
   return (
     <section className={styles.section} id="meilleure-vente">
-      {/* Controls Header */}
-      <div ref={header.ref} className={`${styles.controls} reveal ${header.visible ? 'visible' : ''}`}>
-        <div className={styles.leftLabelGroup}>
-          <span className={styles.collectionBadge}>Sélection exclusive</span>
-          <span className={styles.digitalScrollHint}>
-            <SwipeIcon /> Glisser les articles
-          </span>
-        </div>
-
-        {/* Digital Counter & Navigation */}
-        <div className={styles.digitalNavWrapper}>
-          <button
-            id="slider-prev"
-            className={styles.digitalNavBtn}
-            onClick={() => (isMobile ? scrollToItem(activeMobileIndex - 1) : changeDesktopPage(page - 1))}
-            disabled={isMobile ? activeMobileIndex === 0 : page === 0}
-            aria-label="Article précédent"
-          >
-            <ChevronLeft />
-          </button>
-
-          <div className={styles.digitalCounterBox}>
-            <span className={styles.digitalCurrent}>
-              {String((isMobile ? activeMobileIndex + 1 : (page + 1))).padStart(2, '0')}
-            </span>
-            <span className={styles.digitalDivider}>/</span>
-            <span className={styles.digitalTotal}>
-              {String(isMobile ? displayProducts.length : totalPages).padStart(2, '0')}
-            </span>
-          </div>
-
-          <button
-            id="slider-next"
-            className={styles.digitalNavBtn}
-            onClick={() => (isMobile ? scrollToItem(activeMobileIndex + 1) : changeDesktopPage(page + 1))}
-            disabled={isMobile ? activeMobileIndex >= displayProducts.length - 1 : page >= totalPages - 1}
-            aria-label="Article suivant"
-          >
-            <ChevronRight />
-          </button>
-        </div>
-      </div>
-
       {/* Section Title */}
       <div className={styles.header}>
         <h2

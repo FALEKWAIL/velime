@@ -851,6 +851,40 @@ export default function AdminPage() {
       {/* Main Content */}
       <main className={styles.main}>
         <header className={styles.topBar}>
+          {/* Mobile Tabs Switcher */}
+          <div className={styles.mobileTabsNav}>
+            <button
+              className={`${styles.mobileTabChip} ${activeTab === 'products' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('products')}
+            >
+              Articles ({products.length})
+            </button>
+            <button
+              className={`${styles.mobileTabChip} ${activeTab === 'categories' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              Catégories ({categories.length})
+            </button>
+            <button
+              className={`${styles.mobileTabChip} ${activeTab === 'hero' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('hero')}
+            >
+              Accueil
+            </button>
+            <button
+              className={`${styles.mobileTabChip} ${activeTab === 'brands' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('brands')}
+            >
+              Marques ({brands.length})
+            </button>
+            <button
+              className={`${styles.mobileTabChip} ${activeTab === 'lookbook' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('lookbook')}
+            >
+              Lookbook ({lookbookList.length})
+            </button>
+          </div>
+
           <div>
             <h1 className={styles.pageTitle}>
               {activeTab === 'products' && 'Gestion des Articles, Tailles, Couleurs & Stock'}

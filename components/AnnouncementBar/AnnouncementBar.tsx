@@ -1,4 +1,5 @@
 'use client';
+import { usePathname } from 'next/navigation';
 import styles from './AnnouncementBar.module.css';
 
 const announcements = [
@@ -11,6 +12,11 @@ const announcements = [
 ];
 
 export default function AnnouncementBar() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
   return (
     <div className={styles.bar} id="top-announcement-bar" role="region" aria-label="Annonces boutique">
       <div className={styles.track}>
