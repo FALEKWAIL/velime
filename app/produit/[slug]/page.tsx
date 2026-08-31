@@ -1,12 +1,11 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { use } from 'react';
 import { getProductBySlug, formatPrice, getColorHex, isVariantInStock } from '@/data/products';
 import { useSiteData } from '@/hooks/useSiteData';
 import { useCart } from '@/context/CartContext';
-import DirectOrderForm from '@/components/DirectOrderForm/DirectOrderForm';
 import styles from './product.module.css';
 
 interface Props {
@@ -15,6 +14,7 @@ interface Props {
 
 export default function ProductPage({ params }: Props) {
   const { slug } = use(params);
+  const router = useRouter();
   const { products: dynamicProducts } = useSiteData();
   
   // Find product in dynamic products or fallback to static catalog
@@ -114,34 +114,12 @@ export default function ProductPage({ params }: Props) {
 
   const handleOrderNowClick = () => {
     if (isTotalOut) return;
-
-    // Check color selection if product has colors
-    if (productColors.length > 0 && !selectedColor) {
-      setError('Veuillez sélectionner une couleur.');
-      return;
-    }
-
-    // Check size selection
-    if (!selectedSize) {
-      setError('Veuillez sélectionner une taille.');
-      return;
-    }
-
-    // Check availability
-    if (!isVariantInStock(product, selectedSize, selectedColor || undefined)) {
-      setError(`Cette taille (${selectedSize}) est actuellement épuisée en ${selectedColor || 'cette variante'}.`);
-      return;
-    }
-
-    setError('');
-    setIsOrderFormOpen(true);
-
-    setTimeout(() => {
-      const el = document.getElementById('direct-order-section');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 120);
+    const params = new URLSearchParams();
+    params.set('slug', product.slug);
+    if (selectedSize) params.set('size', selectedSize);
+    if (selectedColor) params.set('color', selectedColor);
+    if (quantity > 1) params.set('qty', quantity.toString());
+    router.push(`/commander?${params.toString()}`);
   };
 
   return (
@@ -376,7 +354,7 @@ export default function ProductPage({ params }: Props) {
           </div>
 
           {/* ============================================================
-              COMMANDER MAINTENANT (FULL WIDTH BUTTON)
+              COMMANDER MAINTENANT (PRIMARY FULL WIDTH BUTTON)
              ============================================================ */}
           <button
             id="order-now-trigger-btn"
@@ -385,23 +363,8 @@ export default function ProductPage({ params }: Props) {
             onClick={handleOrderNowClick}
             disabled={isTotalOut}
           >
-            {isOrderFormOpen ? 'Informations de Commande Directe ▾' : 'Commander maintenant'}
+            <span>Commander maintenant</span>
           </button>
-
-          {/* ============================================================
-              DIRECT ORDER FORM SECTION (EXPANDED WHEN CLICKED)
-             ============================================================ */}
-          {isOrderFormOpen && (
-            <div className={styles.orderFormExpandedWrapper} id="direct-order-section">
-              <DirectOrderForm
-                product={product}
-                selectedSize={selectedSize}
-                selectedColor={selectedColor}
-                quantity={quantity}
-                disabled={isTotalOut || !isCurrentSelectionInStock}
-              />
-            </div>
-          )}
 
           <div className={styles.features}>
             <div className={styles.feature}>

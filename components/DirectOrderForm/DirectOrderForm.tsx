@@ -1,32 +1,40 @@
 'use client';
 import { useState, useId } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Product, DeliveryType, Order } from '@/types';
 import { WILAYAS_ALGERIA, getWilayaByCode } from '@/lib/wilayas';
 import { useOrders } from '@/hooks/useOrders';
-import { formatPrice, getColorHex } from '@/data/products';
+import { formatPrice, isVariantInStock } from '@/data/products';
 import styles from './DirectOrderForm.module.css';
 
 interface Props {
   product: Product;
-  selectedSize: string;
+  selectedSize?: string;
   selectedColor?: string;
-  quantity: number;
+  quantity?: number;
+  onColorChange?: (color: string) => void;
+  onSizeChange?: (size: string) => void;
   onQuantityChange?: (qty: number) => void;
   disabled?: boolean;
 }
 
 export default function DirectOrderForm({
   product,
-  selectedSize,
-  selectedColor,
-  quantity,
+  selectedSize: initialSize = '',
+  selectedColor: initialColor = '',
+  quantity: initialQuantity = 1,
+  onColorChange,
+  onSizeChange,
   onQuantityChange,
   disabled = false,
 }: Props) {
   const { placeOrder } = useOrders();
   const formId = useId();
+
+  // Local state for choices
+  const [color, setColor] = useState(initialColor);
+  const [size, setSize] = useState(initialSize);
+  const [qty, setQty] = useState(initialQuantity);
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -39,10 +47,33 @@ export default function DirectOrderForm({
   const [errorMsg, setErrorMsg] = useState('');
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
+  const productColors = product.colors && product.colors.length > 0 ? product.colors : [];
   const currentWilaya = getWilayaByCode(selectedWilayaCode) || WILAYAS_ALGERIA[15]; // Alger fallback
   const deliveryFee = deliveryType === 'domicile' ? currentWilaya.homePrice : currentWilaya.deskPrice;
-  const itemsSubtotal = product.price * quantity;
+  const itemsSubtotal = product.price * qty;
   const totalAmount = itemsSubtotal + deliveryFee;
+
+  const handleColorSelect = (newColor: string) => {
+    setColor(newColor);
+    setErrorMsg('');
+    if (onColorChange) onColorChange(newColor);
+    if (size && !isVariantInStock(product, size, newColor)) {
+      setSize('');
+      if (onSizeChange) onSizeChange('');
+    }
+  };
+
+  const handleSizeSelect = (newSize: string) => {
+    setSize(newSize);
+    setErrorMsg('');
+    if (onSizeChange) onSizeChange(newSize);
+  };
+
+  const handleQtyChange = (newQty: number) => {
+    const val = Math.max(1, newQty);
+    setQty(val);
+    if (onQuantityChange) onQuantityChange(val);
+  };
 
   const handleWilayaChange = (code: string) => {
     setSelectedWilayaCode(code);
@@ -58,8 +89,18 @@ export default function DirectOrderForm({
     e.preventDefault();
     if (disabled) return;
 
-    if (!selectedSize) {
-      setErrorMsg('Veuillez sélectionner une taille avant de commander.');
+    if (productColors.length > 0 && !color) {
+      setErrorMsg('Veuillez sélectionner une couleur.');
+      return;
+    }
+
+    if (!size) {
+      setErrorMsg('Veuillez sélectionner une taille.');
+      return;
+    }
+
+    if (!isVariantInStock(product, size, color || undefined)) {
+      setErrorMsg(`La taille (${size}) est épuisée en ${color || 'cette variante'}.`);
       return;
     }
 
@@ -91,9 +132,9 @@ export default function DirectOrderForm({
             productName: product.name,
             productImage: product.image || (product.images && product.images[0]) || '/images/p1.jpg',
             price: product.price,
-            quantity,
-            size: selectedSize,
-            color: selectedColor,
+            quantity: qty,
+            size: size,
+            color: color || undefined,
           },
         ],
         itemsSubtotal,
@@ -167,13 +208,82 @@ export default function DirectOrderForm({
     <div className={styles.orderContainer} id="direct-order-section">
       <div className={styles.formHeader}>
         <div className={styles.headerTitleRow}>
-          <span className={styles.expressBadge}>⚡ Commande Express</span>
+          <span className={styles.expressBadge}>⚡ Formulaire de Commande</span>
           <h3 className={styles.formTitle}>Commander Directement</h3>
         </div>
-        <p className={styles.formSubtitle}>Remplissez vos informations, paiement sécurisé en espèces à la livraison</p>
+        <p className={styles.formSubtitle}>Choisissez vos options et remplissez vos informations de livraison</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* ============================================================
+            PRODUCT OPTIONS (COLOR, SIZE, QUANTITY) DIRECTLY IN FORM
+           ============================================================ */}
+        <div className={styles.productOptionsSection}>
+          {productColors.length > 0 && (
+            <div className={styles.formGroup}>
+              <label htmlFor={`${formId}-color`} className={styles.formLabel}>
+                Couleur <span className={styles.req}>*</span>
+              </label>
+              <select
+                id={`${formId}-color`}
+                value={color}
+                onChange={(e) => handleColorSelect(e.target.value)}
+                className={styles.formSelect}
+                required
+              >
+                <option value="">Choisir une option</option>
+                {productColors.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className={styles.twoColGrid}>
+            <div className={styles.formGroup}>
+              <label htmlFor={`${formId}-size`} className={styles.formLabel}>
+                Taille <span className={styles.req}>*</span>
+              </label>
+              <select
+                id={`${formId}-size`}
+                value={size}
+                onChange={(e) => handleSizeSelect(e.target.value)}
+                className={styles.formSelect}
+                required
+              >
+                <option value="">Choisir une option</option>
+                {product.sizes.map((s) => {
+                  const inStock = isVariantInStock(product, s, color || undefined);
+                  return (
+                    <option key={s} value={s} disabled={!inStock}>
+                      {s} {!inStock ? '(Épuisé)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Quantité</label>
+              <div className={styles.qtyStepperBox}>
+                <button
+                  type="button"
+                  className={styles.qtyStepBtn}
+                  onClick={() => handleQtyChange(qty - 1)}
+                >−</button>
+                <span className={styles.qtyStepVal}>{qty}</span>
+                <button
+                  type="button"
+                  className={styles.qtyStepBtn}
+                  onClick={() => handleQtyChange(qty + 1)}
+                >+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.formDivider} />
+
         {/* Customer Full Name */}
         <div className={styles.formGroup}>
           <label htmlFor={`${formId}-name`} className={styles.formLabel}>
@@ -305,7 +415,7 @@ export default function DirectOrderForm({
         {/* Live Calculation Bill */}
         <div className={styles.priceRecapBox}>
           <div className={styles.recapRow}>
-            <span>{product.name} ({selectedSize ? `Taille ${selectedSize}` : 'Sans taille'} {selectedColor ? `• ${selectedColor}` : ''}) × {quantity}</span>
+            <span>{product.name} ({size ? `Taille ${size}` : 'Taille non choisie'} {color ? `• ${color}` : ''}) × {qty}</span>
             <span>{formatPrice(itemsSubtotal)}</span>
           </div>
           <div className={styles.recapRow}>
@@ -314,7 +424,7 @@ export default function DirectOrderForm({
           </div>
           <div className={styles.recapDivider} />
           <div className={styles.recapTotalRow}>
-            <span>Total net à payer :</span>
+            <span>Total net à payer à la livraison :</span>
             <strong className={styles.totalPriceValue}>{formatPrice(totalAmount)}</strong>
           </div>
         </div>

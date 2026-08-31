@@ -47,6 +47,60 @@
   margin: 0;
 }
 
+.productOptionsSection {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E5DED2;
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.qtyStepperBox {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #D8CEBE;
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  height: 44px;
+  overflow: hidden;
+}
+
+.qtyStepBtn {
+  width: 36px;
+  height: 100%;
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #3B2C20;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.qtyStepBtn:hover {
+  background-color: #F5EFE6;
+}
+
+.qtyStepVal {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #2B221A;
+}
+
+.formDivider {
+  height: 1px;
+  background-color: #EDE5D8;
+  margin: 0.25rem 0;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -61,9 +115,9 @@
 
 .formLabel {
   font-family: var(--font-sans);
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: #4E4034;
+  color: #3B2C20;
   letter-spacing: 0.02em;
 }
 
@@ -74,7 +128,7 @@
 .formInput,
 .formSelect {
   width: 100%;
-  padding: 0.75rem 0.9rem;
+  padding: 0.8rem 0.95rem;
   background-color: #FFFFFF;
   border: 1.5px solid #D8CEBE;
   border-radius: 6px;
@@ -87,8 +141,8 @@
 
 .formInput:focus,
 .formSelect:focus {
-  border-color: #4E4034;
-  box-shadow: 0 0 0 3px rgba(78, 64, 52, 0.1);
+  border-color: #3B2C20;
+  box-shadow: 0 0 0 3px rgba(59, 44, 32, 0.12);
 }
 
 .twoColGrid {

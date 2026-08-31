@@ -592,67 +592,77 @@
 
 .addToCartBtn {
   flex: 1;
-  height: 48px;
-  background-color: #D4C3B3;
+  height: 50px;
+  background-color: #B88E5E;
   color: #FFFFFF;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-family: var(--font-sans);
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 3px 10px rgba(184, 142, 94, 0.22);
 }
 
 .addToCartBtn:hover:not(:disabled) {
-  background-color: #BFAEA0;
+  background-color: #9C7244;
+  box-shadow: 0 5px 14px rgba(184, 142, 94, 0.32);
 }
 
 .addToCartBtn:disabled {
-  background-color: #E2DBD2;
-  color: #9C8E80;
+  background-color: #D6CBC0;
+  color: #8C7E72;
   cursor: not-allowed;
   opacity: 0.7;
+  box-shadow: none;
 }
 
 .addToCartSuccess {
   background-color: #2E7D32 !important;
   color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(46, 125, 50, 0.25) !important;
 }
 
 /* ============================================================
-   COMMANDER MAINTENANT (FULL WIDTH BUTTON)
+   COMMANDER MAINTENANT (PRIMARY FULL WIDTH BUTTON)
    ============================================================ */
 .orderNowBtn {
   width: 100%;
-  height: 48px;
-  background-color: #D4C3B3;
+  height: 52px;
+  background-color: #3B2C20;
   color: #FFFFFF;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-family: var(--font-sans);
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 16px rgba(59, 44, 32, 0.25);
 }
 
 .orderNowBtn:hover:not(:disabled) {
-  background-color: #BFAEA0;
+  background-color: #231912;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 44, 32, 0.35);
 }
 
 .orderNowBtn:disabled {
-  background-color: #E2DBD2;
-  color: #9C8E80;
+  background-color: #D6CBC0;
+  color: #8C7E72;
   cursor: not-allowed;
   opacity: 0.7;
+  box-shadow: none;
 }
 
 .orderFormExpandedWrapper {
