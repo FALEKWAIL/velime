@@ -307,7 +307,7 @@ export const products: Product[] = [
 export const categories = ['Toutes', ...defaultCategories.map(c => c.name)];
 
 export const formatPrice = (price: number): string => {
-  return price.toLocaleString('fr-DZ').replace(',', '.') + ',00 دج';
+  return price.toLocaleString('de-DE') + ',00 د.ج';
 };
 
 export const getBestSellers = (): Product[] =>

@@ -1,0 +1,282 @@
+.section {
+  padding: 3.5rem 0 3rem;
+  background-color: var(--soft-ivory);
+  position: relative;
+  overflow: hidden;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ============================================================
+   HEADER: Nouveautés & TOUT VOIR
+   ============================================================ */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding: 0 0.5rem;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 500;
+  color: var(--deep-mocha);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.seeAllLink {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--deep-mocha);
+  text-decoration: none;
+  padding-bottom: 2px;
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+
+.seeAllLink:hover {
+  opacity: 0.75;
+}
+
+.seeAllUnderline {
+  display: block;
+  width: 100%;
+  height: 1.5px;
+  background-color: #B7A996;
+  margin-top: 3px;
+}
+
+/* ============================================================
+   TRACK & CARDS
+   ============================================================ */
+.track {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0.5rem 1.5rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.track::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.cardWrapper {
+  flex: 0 0 calc(50% - 0.65rem); /* Exactly 2 cards per view on mobile */
+  max-width: 320px;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+}
+
+/* ============================================================
+   ARCH DOME PHOTO FRAME (Matching Screenshot)
+   ============================================================ */
+.archWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4.1;
+  /* Arch shape: circular top dome, subtle rounded bottom */
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  overflow: hidden;
+  background-color: #E8E0D7;
+  box-shadow: 0 4px 18px rgba(78, 64, 52, 0.07);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+}
+
+.cardLink:hover .archWrapper {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(78, 64, 52, 0.12);
+}
+
+.archImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cardLink:hover .archImage {
+  transform: scale(1.04);
+}
+
+.badge {
+  position: absolute;
+  top: 24px;
+  right: 14px;
+  background-color: rgba(78, 64, 52, 0.88);
+  backdrop-filter: blur(6px);
+  color: #FAF6EE;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 99px;
+  z-index: 2;
+}
+
+/* ============================================================
+   PRODUCT INFO: Centered Name & Dinar Price
+   ============================================================ */
+.info {
+  text-align: center;
+  padding-top: 1.1rem;
+}
+
+.productName {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--deep-mocha);
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem;
+  line-height: 1.2;
+  transition: color 0.2s ease;
+}
+
+.cardLink:hover .productName {
+  color: var(--cozy-walnut);
+}
+
+.productPrice {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #6E5C4E;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   DIGITAL PILL / DASH INDICATORS (Matching Screenshot)
+   ============================================================ */
+.paginationRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.dashesContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dash {
+  width: 22px;
+  height: 3.5px;
+  border-radius: 99px;
+  background-color: #D9D2C6;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.dash:hover {
+  background-color: #B7A996;
+}
+
+.dashActive {
+  width: 34px;
+  background-color: #C07960; /* Warm terracotta highlight matching luxury brand accents */
+}
+
+/* ============================================================
+   DESKTOP / TABLET RESPONSIVE
+   ============================================================ */
+@media (min-width: 769px) {
+  .section {
+    padding: 4.5rem 0 4rem;
+  }
+
+  .title {
+    font-size: 2.6rem;
+  }
+
+  .cardWrapper {
+    flex: 0 0 calc(25% - 1rem); /* 4 cards view on large screens */
+    max-width: none;
+  }
+
+  .productName {
+    font-size: 1.35rem;
+  }
+
+  .productPrice {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: 2.75rem 0 2.25rem;
+  }
+
+  .headerRow {
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.85rem;
+  }
+
+  .cardWrapper {
+    flex: 0 0 calc(50% - 0.5rem);
+  }
+
+  .archWrapper {
+    aspect-ratio: 3 / 4.2;
+  }
+
+  .productName {
+    font-size: 1.05rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .productPrice {
+    font-size: 0.95rem;
+  }
+
+  .dash {
+    width: 18px;
+    height: 3px;
+  }
+
+  .dashActive {
+    width: 28px;
+  }
+}

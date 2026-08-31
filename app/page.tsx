@@ -1,4 +1,5 @@
 import HeroSection from '@/components/HeroSection/HeroSection';
+import NewArrivalsSlider from '@/components/NewArrivalsSlider/NewArrivalsSlider';
 import CategoriesSection from '@/components/CategoriesSection/CategoriesSection';
 import ProductSlider from '@/components/ProductSlider/ProductSlider';
 import BrandsBanner from '@/components/BrandsBanner/BrandsBanner';
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <NewArrivalsSlider />
       <CategoriesSection />
       <ProductSlider products={bestSellers} title="Meilleure vente" />
       <BrandsBanner />
