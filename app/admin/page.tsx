@@ -9,6 +9,8 @@ import {
   generateDefaultStockMatrix,
   computeStockStatusFromMatrix,
 } from '@/data/products';
+import { useOrders } from '@/hooks/useOrders';
+import { OrderStatus } from '@/types';
 import styles from './admin.module.css';
 
 const ADMIN_PASSWORD = 'velime2024';
@@ -27,12 +29,18 @@ export default function AdminPage() {
     lookbookPhotos,
     saveData,
   } = useSiteData();
+
+  const { orders, updateStatus, removeOrder } = useOrders();
   
   const [authed, setAuthed] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [savedMsg, setSavedMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'hero' | 'brands' | 'lookbook'>('products');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'categories' | 'hero' | 'brands' | 'lookbook'>('orders');
+
+  // Filter state for orders
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // Filter state for products
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
@@ -740,6 +748,20 @@ export default function AdminPage() {
     return matchCat && matchQuery;
   });
 
+  // Filtered orders list
+  const pendingOrdersCount = orders.filter((o) => o.status === 'en_attente').length;
+  const filteredOrders = orders.filter((o) => {
+    const matchStatus = orderStatusFilter === 'all' || o.status === orderStatusFilter;
+    const matchQuery =
+      !orderSearchQuery.trim() ||
+      o.orderNumber.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+      o.customerName.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+      o.customerPhone.includes(orderSearchQuery.trim()) ||
+      o.wilayaName.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+      o.commune.toLowerCase().includes(orderSearchQuery.toLowerCase());
+    return matchStatus && matchQuery;
+  });
+
   /* ============================================================
      LOGIN VIEW
      ============================================================ */
@@ -790,6 +812,20 @@ export default function AdminPage() {
         </div>
 
         <nav className={styles.sideNav}>
+          <button
+            id="nav-tab-orders"
+            className={`${styles.sideNavBtn} ${activeTab === 'orders' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            <ShoppingBagIcon />
+            <span>Commandes ({orders.length})</span>
+            {orders.filter(o => o.status === 'en_attente').length > 0 && (
+              <span className={styles.tabBadgePending}>
+                {orders.filter(o => o.status === 'en_attente').length}
+              </span>
+            )}
+          </button>
+
           <button
             id="nav-tab-products"
             className={`${styles.sideNavBtn} ${activeTab === 'products' ? styles.sideNavActive : ''}`}
@@ -854,6 +890,12 @@ export default function AdminPage() {
           {/* Mobile Tabs Switcher */}
           <div className={styles.mobileTabsNav}>
             <button
+              className={`${styles.mobileTabChip} ${activeTab === 'orders' ? styles.mobileTabChipActive : ''}`}
+              onClick={() => setActiveTab('orders')}
+            >
+              📦 Commandes ({orders.length})
+            </button>
+            <button
               className={`${styles.mobileTabChip} ${activeTab === 'products' ? styles.mobileTabChipActive : ''}`}
               onClick={() => setActiveTab('products')}
             >
@@ -887,6 +929,7 @@ export default function AdminPage() {
 
           <div>
             <h1 className={styles.pageTitle}>
+              {activeTab === 'orders' && 'Gestion des Commandes Clients'}
               {activeTab === 'products' && 'Gestion des Articles, Tailles, Couleurs & Stock'}
               {activeTab === 'categories' && 'Gestion des Catégories'}
               {activeTab === 'hero' && 'Personnalisation de la Page d\'Accueil'}
@@ -894,6 +937,7 @@ export default function AdminPage() {
               {activeTab === 'lookbook' && 'Galerie Photos Défilantes (Lookbook Porté)'}
             </h1>
             <p className={styles.pageSubtitle}>
+              {activeTab === 'orders' && `${orders.length} commande(s) au total • Suivez le statut, contactez vos clients et gérez les livraisons`}
               {activeTab === 'products' && 'Matrice dynamique Taille × Couleur, multi-photos et ruptures de stock'}
               {activeTab === 'categories' && 'Ajoutez, modifiez ou supprimez les catégories du catalogue'}
               {activeTab === 'hero' && 'Modifiez le grand titre, slogan et images principales'}
@@ -920,6 +964,211 @@ export default function AdminPage() {
         </header>
 
         <div className={styles.contentArea}>
+          {/* ============================================================
+              TAB: ORDERS (COMMANDES CLIENTS)
+             ============================================================ */}
+          {activeTab === 'orders' && (
+            <div className={styles.tabSection}>
+              {/* Summary Stats Grid */}
+              <div className={styles.orderStatsGrid}>
+                <div className={styles.orderStatCard}>
+                  <span className={styles.statLabel}>Total Commandes</span>
+                  <strong className={styles.statValue}>{orders.length}</strong>
+                  <span className={styles.statSub}>Toutes les commandes</span>
+                </div>
+                <div className={`${styles.orderStatCard} ${styles.statPending}`}>
+                  <span className={styles.statLabel}>En Attente</span>
+                  <strong className={styles.statValue}>{pendingOrdersCount}</strong>
+                  <span className={styles.statSub}>À confirmer par téléphone</span>
+                </div>
+                <div className={`${styles.orderStatCard} ${styles.statDelivered}`}>
+                  <span className={styles.statLabel}>Livrées</span>
+                  <strong className={styles.statValue}>
+                    {orders.filter((o) => o.status === 'livree').length}
+                  </strong>
+                  <span className={styles.statSub}>Commandes abouties</span>
+                </div>
+                <div className={styles.orderStatCard}>
+                  <span className={styles.statLabel}>Chiffre d&apos;Affaires</span>
+                  <strong className={styles.statValue}>
+                    {formatPrice(orders.filter((o) => o.status !== 'annulee').reduce((sum, o) => sum + o.totalAmount, 0))}
+                  </strong>
+                  <span className={styles.statSub}>Hors annulations</span>
+                </div>
+              </div>
+
+              {/* Filter Controls */}
+              <div className={styles.tableControls}>
+                <div className={styles.searchBox}>
+                  <SearchIcon />
+                  <input
+                    type="text"
+                    placeholder="Rechercher client, téléphone, N° commande, wilaya, commune..."
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                  {orderSearchQuery && (
+                    <button
+                      onClick={() => setOrderSearchQuery('')}
+                      className={styles.clearSearchBtn}
+                    >✕</button>
+                  )}
+                </div>
+
+                <div className={styles.orderFilterPills}>
+                  {[
+                    { id: 'all', label: `Toutes (${orders.length})` },
+                    { id: 'en_attente', label: `⏳ En attente (${orders.filter(o => o.status === 'en_attente').length})` },
+                    { id: 'confirmee', label: `✅ Confirmées (${orders.filter(o => o.status === 'confirmee').length})` },
+                    { id: 'en_livraison', label: `🚚 En livraison (${orders.filter(o => o.status === 'en_livraison').length})` },
+                    { id: 'livree', label: `🎉 Livrées (${orders.filter(o => o.status === 'livree').length})` },
+                    { id: 'annulee', label: `❌ Annulées (${orders.filter(o => o.status === 'annulee').length})` },
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      className={`${styles.orderPillBtn} ${orderStatusFilter === filter.id ? styles.orderPillActive : ''}`}
+                      onClick={() => setOrderStatusFilter(filter.id)}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Orders List / Cards */}
+              {filteredOrders.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <span className={styles.emptyIcon}>📦</span>
+                  <p className={styles.emptyTitle}>Aucune commande trouvée</p>
+                  <p className={styles.emptySub}>
+                    {orderSearchQuery || orderStatusFilter !== 'all'
+                      ? 'Aucune commande ne correspond à votre recherche.'
+                      : 'Les commandes passées directement sur le site apparaîtront ici avec toutes les coordonnées.'}
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.ordersListGrid}>
+                  {filteredOrders.map((ord) => {
+                    const formattedDate = new Date(ord.createdAt).toLocaleDateString('fr-DZ', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+
+                    return (
+                      <div key={ord.id} className={styles.orderCardItem} id={`order-card-${ord.id}`}>
+                        {/* Card Header */}
+                        <div className={styles.orderCardTop}>
+                          <div className={styles.orderNumberGroup}>
+                            <span className={styles.orderNumTag}>#{ord.orderNumber}</span>
+                            <span className={styles.orderDate}>{formattedDate}</span>
+                          </div>
+
+                          <div className={styles.statusDropdownWrapper}>
+                            <select
+                              value={ord.status}
+                              onChange={(e) => {
+                                updateStatus(ord.id, e.target.value as OrderStatus);
+                                showNotification(`Statut de la commande #${ord.orderNumber} mis à jour.`);
+                              }}
+                              className={`${styles.statusSelect} ${styles[`status_${ord.status}`]}`}
+                            >
+                              <option value="en_attente">⏳ En attente</option>
+                              <option value="confirmee">✅ Confirmée</option>
+                              <option value="en_livraison">🚚 En livraison</option>
+                              <option value="livree">🎉 Livrée</option>
+                              <option value="annulee">❌ Annulée</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Customer Information */}
+                        <div className={styles.orderCustomerBox}>
+                          <div className={styles.custMainInfo}>
+                            <strong className={styles.custName}>{ord.customerName}</strong>
+                            <div className={styles.custPhoneRow}>
+                              <a href={`tel:${ord.customerPhone}`} className={styles.phoneCallLink}>
+                                📞 {ord.customerPhone}
+                              </a>
+                              <a
+                                href={`https://wa.me/213${ord.customerPhone.replace(/^0/, '')}?text=Bonjour%20${encodeURIComponent(ord.customerName)},%20je%20vous%20contacte%20concernant%20votre%20commande%20${ord.orderNumber}%20sur%20Velime%20Boutique.`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.whatsAppLink}
+                                title="Envoyer message WhatsApp"
+                              >
+                                💬 WhatsApp
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className={styles.custAddressInfo}>
+                            <span className={styles.destBadge}>
+                              📍 <strong>{ord.wilayaName} ({ord.wilayaCode})</strong> — {ord.commune}
+                            </span>
+                            <span className={styles.deliveryTypeBadge}>
+                              {ord.deliveryType === 'domicile' ? '🏠 À Domicile' : '🏢 Bureau (Stop-Desk)'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Items in this Order */}
+                        <div className={styles.orderItemsList}>
+                          {ord.items.map((item, idx) => (
+                            <div key={idx} className={styles.orderItemRow}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.productImage}
+                                alt={item.productName}
+                                className={styles.orderItemThumb}
+                              />
+                              <div className={styles.orderItemDetails}>
+                                <span className={styles.orderItemTitle}>{item.productName}</span>
+                                <span className={styles.orderItemMeta}>
+                                  Taille : <strong>{item.size}</strong> {item.color ? `• Couleur : ${item.color}` : ''} • Qté : <strong>{item.quantity}</strong>
+                                </span>
+                              </div>
+                              <span className={styles.orderItemPrice}>{formatPrice(item.price * item.quantity)}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Card Bottom: Fees & Total */}
+                        <div className={styles.orderCardBottom}>
+                          <div className={styles.orderFeeRow}>
+                            <span className={styles.subtleFee}>Livraison : {formatPrice(ord.deliveryCost)}</span>
+                            <span className={styles.orderTotalAmount}>
+                              Total à encaisser : <strong>{formatPrice(ord.totalAmount)}</strong>
+                            </span>
+                          </div>
+
+                          <div className={styles.orderCardActions}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Supprimer définitivement la commande #${ord.orderNumber} ?`)) {
+                                  removeOrder(ord.id);
+                                  showNotification(`Commande #${ord.orderNumber} supprimée.`);
+                                }
+                              }}
+                              className={styles.deleteOrderBtn}
+                            >
+                              🗑️ Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ============================================================
               TAB: PRODUCTS
              ============================================================ */}
@@ -2029,6 +2278,16 @@ function CameraIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="12" cy="13" r="4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ShoppingBagIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 10a4 4 0 01-8 0" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

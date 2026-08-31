@@ -508,31 +508,43 @@
   background-color: var(--cozy-walnut);
 }
 
+.secondaryActions {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.addBtnSecondary {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #FFFFFF;
+  color: #4E4034;
+  border: 1.5px solid #D5CCBE;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addBtnSecondary:hover:not(:disabled) {
+  border-color: #4E4034;
+  background-color: #F8F5F0;
+}
+
 .addBtnDisabled {
-  background-color: var(--natural-stone);
+  background-color: #f7f5f0;
+  border-color: #e2ded5;
+  color: #a39585;
   cursor: not-allowed;
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
 .addBtnSuccess {
-  background-color: #22543d;
-}
-
-.whatsappOrderBtn {
-  width: 100%;
-  padding: 0.9rem;
-  background-color: #25D366;
-  color: #ffffff;
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-align: center;
-  border-radius: 2px;
-  text-decoration: none;
-  transition: background-color 0.2s ease;
-  display: block;
+  background-color: #22543d !important;
+  color: #FFFFFF !important;
+  border-color: #22543d !important;
 }
 
 .whatsappOrderBtn:hover {

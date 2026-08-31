@@ -1,0 +1,85 @@
+export interface Wilaya {
+  code: string;
+  name: string;
+  arName: string;
+  homePrice: number;
+  deskPrice: number;
+  communes?: string[];
+}
+
+export const WILAYAS_ALGERIA: Wilaya[] = [
+  { code: '01', name: 'Adrar', arName: 'أدرار', homePrice: 900, deskPrice: 600, communes: ['Adrar', 'Tamest', 'Reggane', 'Fenoughil', 'Timimoun', 'Aoulef'] },
+  { code: '02', name: 'Chlef', arName: 'الشلف', homePrice: 600, deskPrice: 400, communes: ['Chlef', 'Ténès', 'Boukadir', 'Oued Fodda', 'El Karimia', 'Taougrite'] },
+  { code: '03', name: 'Laghouat', arName: 'الأغواط', homePrice: 700, deskPrice: 450, communes: ['Laghouat', 'Aflou', 'Ksar El Hirane', 'Ain Madhi', 'Hassi R’Mel'] },
+  { code: '04', name: 'Oum El Bouaghi', arName: 'أم البواقي', homePrice: 600, deskPrice: 400, communes: ['Oum El Bouaghi', 'Ain Beida', 'Ain M’Lila', 'Sigus', 'Meskiana'] },
+  { code: '05', name: 'Batna', arName: 'باتنة', homePrice: 600, deskPrice: 400, communes: ['Batna', 'Barika', 'Ain Touta', 'Merouana', 'N’Gaous', 'Arris'] },
+  { code: '06', name: 'Béjaïa', arName: 'بجاية', homePrice: 600, deskPrice: 400, communes: ['Béjaïa', 'Akbou', 'Amizour', 'Seddouk', 'Tichy', 'Aokas', 'El Kseur'] },
+  { code: '07', name: 'Biskra', arName: 'بسكرة', homePrice: 700, deskPrice: 450, communes: ['Biskra', 'Tolga', 'Sidi Okba', 'Ouled Djellal', 'Zeribet El Oued'] },
+  { code: '08', name: 'Béchar', arName: 'بشار', homePrice: 900, deskPrice: 600, communes: ['Béchar', 'Kenadsa', 'Abadla', 'Taghit', 'Béni Abbès'] },
+  { code: '09', name: 'Blida', arName: 'البليدة', homePrice: 500, deskPrice: 350, communes: ['Blida', 'Boufarik', 'Ouled Yaich', 'Larbaa', 'El Affroun', 'Mouzaia'] },
+  { code: '10', name: 'Bouira', arName: 'البويرة', homePrice: 600, deskPrice: 400, communes: ['Bouira', 'Lakhdaria', 'Sour El Ghozlane', 'Ain Bessem', 'M’Chedallah'] },
+  { code: '11', name: 'Tamanrasset', arName: 'تمنراست', homePrice: 1200, deskPrice: 800, communes: ['Tamanrasset', 'In Salah', 'In Guezzam', 'Abalessa'] },
+  { code: '12', name: 'Tébessa', arName: 'تبسة', homePrice: 650, deskPrice: 400, communes: ['Tébessa', 'Cheria', 'Bir El Ater', 'El Aouinet', 'Ouenza'] },
+  { code: '13', name: 'Tlemcen', arName: 'تلمسان', homePrice: 600, deskPrice: 400, communes: ['Tlemcen', 'Maghnia', 'Mansourah', 'Remchi', 'Ghazaouet', 'Sebdou'] },
+  { code: '14', name: 'Tiaret', arName: 'تيارت', homePrice: 650, deskPrice: 400, communes: ['Tiaret', 'Sougueur', 'Frenda', 'Ksar Chellala', 'Mahdia'] },
+  { code: '15', name: 'Tizi Ouzou', arName: 'تيزي وزو', homePrice: 600, deskPrice: 400, communes: ['Tizi Ouzou', 'Azazga', 'Draa Ben Khedda', 'Tigzirt', 'Larbaa Nath Irathen', 'Boghai'] },
+  { code: '16', name: 'Alger', arName: 'الجزائر', homePrice: 400, deskPrice: 250, communes: ['Alger Centre', 'Sidi M’Hamed', 'Bab El Oued', 'Hydra', 'Ben Aknoun', 'Bir Mourad Rais', 'Kouba', 'Hussein Dey', 'Cheraga', 'Dely Ibrahim', 'Zeralda', 'Staoueli', 'Rouiba', 'Dar El Beida', 'Bordj El Kiffan', 'Bab Ezzouar', 'El Biar', 'Bouzareah', 'Baraki'] },
+  { code: '17', name: 'Djelfa', arName: 'الجلفة', homePrice: 650, deskPrice: 450, communes: ['Djelfa', 'Ain Oussera', 'Messaad', 'Hassi Bahbah', 'Dar Chioukh'] },
+  { code: '18', name: 'Jijel', arName: 'جيجل', homePrice: 600, deskPrice: 400, communes: ['Jijel', 'Taher', 'El Milia', 'Chekfa', 'El Ancer', 'Ziama Mansouriah'] },
+  { code: '19', name: 'Sétif', arName: 'سطيف', homePrice: 600, deskPrice: 400, communes: ['Sétif', 'El Eulma', 'Ain Oulmene', 'Ain Arnat', 'Bougaa', 'Ain El Kebira'] },
+  { code: '20', name: 'Saïda', arName: 'سعيدة', homePrice: 650, deskPrice: 400, communes: ['Saïda', 'Youb', 'Ain El Hadjar', 'Ouled Brahim', 'Hassasna'] },
+  { code: '21', name: 'Skikda', arName: 'سكيكدة', homePrice: 600, deskPrice: 400, communes: ['Skikda', 'El Harrouch', 'Azzaba', 'Collo', 'Tamalous'] },
+  { code: '22', name: 'Sidi Bel Abbès', arName: 'سيدي بلعباس', homePrice: 600, deskPrice: 400, communes: ['Sidi Bel Abbès', 'Telagh', 'Sfisef', 'Ben Badis', 'Ras El Ma'] },
+  { code: '23', name: 'Annaba', arName: 'عنابة', homePrice: 600, deskPrice: 400, communes: ['Annaba', 'El Bouni', 'El Hadjar', 'Sidi Amar', 'Berrahal'] },
+  { code: '24', name: 'Guelma', arName: 'قالمة', homePrice: 600, deskPrice: 400, communes: ['Guelma', 'Oued Zenati', 'Bouchegouf', 'Héliopolis', 'Ain Makhlouf'] },
+  { code: '25', name: 'Constantine', arName: 'قسنطينة', homePrice: 600, deskPrice: 400, communes: ['Constantine', 'El Khroub', 'Ain Smara', 'Hamma Bouziane', 'Didouche Mourad', 'Zighoud Youcef'] },
+  { code: '26', name: 'Médéa', arName: 'المدية', homePrice: 600, deskPrice: 400, communes: ['Médéa', 'Berrouaghia', 'Ksar El Boukhari', 'Beni Slimane', 'Tablat'] },
+  { code: '27', name: 'Mostaganem', arName: 'مستغانم', homePrice: 600, deskPrice: 400, communes: ['Mostaganem', 'Ain Nouissy', 'Hassi Mameche', 'Sidi Ali', 'Mesra'] },
+  { code: '28', name: 'M’Sila', arName: 'المسيلة', homePrice: 650, deskPrice: 400, communes: ['M’Sila', 'Bou Saada', 'Sidi Aissa', 'Magra', 'Hammam Dalaa'] },
+  { code: '29', name: 'Mascara', arName: 'معسكر', homePrice: 600, deskPrice: 400, communes: ['Mascara', 'Sig', 'Tighennif', 'Mohammadia', 'Ghriss'] },
+  { code: '30', name: 'Ouargla', arName: 'ورقلة', homePrice: 850, deskPrice: 550, communes: ['Ouargla', 'Hassi Messaoud', 'Touggourt', 'Rouissat', 'Taibet'] },
+  { code: '31', name: 'Oran', arName: 'وهران', homePrice: 550, deskPrice: 350, communes: ['Oran', 'Bir El Djir', 'Es Senia', 'Arzew', 'Ain El Turk', 'Gdyel', 'Bethioua'] },
+  { code: '32', name: 'El Bayadh', arName: 'البيض', homePrice: 750, deskPrice: 500, communes: ['El Bayadh', 'Rogassa', 'Brezina', 'El Abiodh Sidi Cheikh', 'Bougtob'] },
+  { code: '33', name: 'Illizi', arName: 'إليزي', homePrice: 1200, deskPrice: 800, communes: ['Illizi', 'Djanet', 'In Amenas', 'Bordj Omar Driss'] },
+  { code: '34', name: 'Bordj Bou Arreridj', arName: 'برج بوعريريج', homePrice: 600, deskPrice: 400, communes: ['Bordj Bou Arreridj', 'Ras El Oued', 'Bordj Zemoura', 'Mansoura', 'Ain Taghrout'] },
+  { code: '35', name: 'Boumerdès', arName: 'بومرداس', homePrice: 500, deskPrice: 350, communes: ['Boumerdès', 'Zemmouri', 'Thenia', 'Dellys', 'Khemis El Khechna', 'Boudouaou', 'Isser', 'Baghlia'] },
+  { code: '36', name: 'El Tarf', arName: 'الطارف', homePrice: 650, deskPrice: 400, communes: ['El Tarf', 'El Kala', 'Ben M’Hidi', 'Drean', 'Besbes'] },
+  { code: '37', name: 'Tindouf', arName: 'تندوف', homePrice: 1200, deskPrice: 800, communes: ['Tindouf', 'Oum El Assel'] },
+  { code: '38', name: 'Tissemsilt', arName: 'تيسمسيلت', homePrice: 650, deskPrice: 400, communes: ['Tissemsilt', 'Theniet El Had', 'Khemisti', 'Bordj Bounaama', 'Lardjem'] },
+  { code: '39', name: 'El Oued', arName: 'الوادي', homePrice: 800, deskPrice: 500, communes: ['El Oued', 'Guemar', 'Debila', 'Magrane', 'Robbah', 'Bayadha'] },
+  { code: '40', name: 'Khenchela', arName: 'خنشلة', homePrice: 650, deskPrice: 400, communes: ['Khenchela', 'Kais', 'Chechar', 'Bouhmama', 'El Hamma'] },
+  { code: '41', name: 'Souk Ahras', arName: 'سوق أهراس', homePrice: 650, deskPrice: 400, communes: ['Souk Ahras', 'Sedrata', 'M’Daourouch', 'Taoura', 'Merahna'] },
+  { code: '42', name: 'Tipaza', arName: 'تيبازة', homePrice: 500, deskPrice: 350, communes: ['Tipaza', 'Cherchell', 'Kolea', 'Bou Ismail', 'Hadjout', 'Fouka', 'Gouraya'] },
+  { code: '43', name: 'Mila', arName: 'ميلة', homePrice: 600, deskPrice: 400, communes: ['Mila', 'Chelghoum Laid', 'Tadjenanet', 'Ferdjioua', 'Grarem Gouga'] },
+  { code: '44', name: 'Aïn Defla', arName: 'عين الدفلى', homePrice: 600, deskPrice: 400, communes: ['Aïn Defla', 'Khemis Miliana', 'Miliana', 'El Attaf', 'Djelida'] },
+  { code: '45', name: 'Naâma', arName: 'النعامة', homePrice: 750, deskPrice: 500, communes: ['Naâma', 'Mecheria', 'Ain Sefra', 'Tiout', 'Sfissifa'] },
+  { code: '46', name: 'Aïn Témouchent', arName: 'عين تموشنت', homePrice: 600, deskPrice: 400, communes: ['Aïn Témouchent', 'Beni Saf', 'Hammam Bouhadjar', 'El Malah'] },
+  { code: '47', name: 'Ghardaïa', arName: 'غرداية', homePrice: 800, deskPrice: 500, communes: ['Ghardaïa', 'Metlili', 'El Guerrara', 'Dahmoun', 'Bounoura'] },
+  { code: '48', name: 'Relizane', arName: 'غليزان', homePrice: 600, deskPrice: 400, communes: ['Relizane', 'Oued Rhiou', 'Mazouna', 'Zemmora', 'Sidi M’Hamed Ben Ali'] },
+  { code: '49', name: 'Timimoun', arName: 'تيميمون', homePrice: 950, deskPrice: 650, communes: ['Timimoun', 'Aougrout', 'Tinerkouk'] },
+  { code: '50', name: 'Bordj Badji Mokhtar', arName: 'برج باجي مختار', homePrice: 1300, deskPrice: 900, communes: ['Bordj Badji Mokhtar', 'Timiaouine'] },
+  { code: '51', name: 'Ouled Djellal', arName: 'أولاد جلال', homePrice: 750, deskPrice: 500, communes: ['Ouled Djellal', 'Sidi Khaled', 'Ras El Miaad'] },
+  { code: '52', name: 'Béni Abbès', arName: 'بني عباس', homePrice: 950, deskPrice: 650, communes: ['Béni Abbès', 'Kerzaz', 'Tabelbala', 'Igli'] },
+  { code: '53', name: 'In Salah', arName: 'عين صالح', homePrice: 1200, deskPrice: 800, communes: ['In Salah', 'Foggaret Ezzoua', 'In Ghar'] },
+  { code: '54', name: 'In Guezzam', arName: 'عين قزام', homePrice: 1300, deskPrice: 900, communes: ['In Guezzam', 'Tin Zaouatine'] },
+  { code: '55', name: 'Touggourt', arName: 'تقرت', homePrice: 850, deskPrice: 550, communes: ['Touggourt', 'Temacine', 'Megarine', 'Taibet'] },
+  { code: '56', name: 'Djanet', arName: 'جانت', homePrice: 1300, deskPrice: 900, communes: ['Djanet', 'Bordj El Haouas'] },
+  { code: '57', name: 'El M’Ghair', arName: 'المغير', homePrice: 800, deskPrice: 500, communes: ['El M’Ghair', 'Djamaa', 'Oum Touyour'] },
+  { code: '58', name: 'El Meniaa', arName: 'المنيعة', homePrice: 850, deskPrice: 550, communes: ['El Meniaa', 'Hassi Gara', 'Hassi Fehal'] },
+  // Additional modern administrative Wilayas / Delegations (69 modern regions)
+  { code: '59', name: 'Aflou', arName: 'أفلو', homePrice: 700, deskPrice: 450, communes: ['Aflou', 'El Ghicha', 'Oued Morra'] },
+  { code: '60', name: 'Barika', arName: 'بريكة', homePrice: 600, deskPrice: 400, communes: ['Barika', 'Bitam', 'Djezzar'] },
+  { code: '61', name: 'Ksar Chellala', arName: 'قصر الشلالة', homePrice: 650, deskPrice: 400, communes: ['Ksar Chellala', 'Rechaiga', 'Zmalet El Emir Abdelkader'] },
+  { code: '62', name: 'Ain Oussera', arName: 'عين وسارة', homePrice: 650, deskPrice: 450, communes: ['Ain Oussera', 'Benhar', 'Birine'] },
+  { code: '63', name: 'Messaad', arName: 'مسعد', homePrice: 650, deskPrice: 450, communes: ['Messaad', 'Selmana', 'Guettara'] },
+  { code: '64', name: 'Bou Saada', arName: 'بوسعادة', homePrice: 650, deskPrice: 400, communes: ['Bou Saada', 'El Hamel', 'Oulteme'] },
+  { code: '65', name: 'El Abiodh Sidi Cheikh', arName: 'الأبيض سيدي الشيخ', homePrice: 750, deskPrice: 500, communes: ['El Abiodh Sidi Cheikh', 'Ain El Orak', 'El Bnoud'] },
+  { code: '66', name: 'Maghnia', arName: 'مغنية', homePrice: 600, deskPrice: 400, communes: ['Maghnia', 'Souani', 'Sidi Medjahed'] },
+  { code: '67', name: 'Akbou', arName: 'أقبو', homePrice: 600, deskPrice: 400, communes: ['Akbou', 'Ighram', 'Tazmalt'] },
+  { code: '68', name: 'El Eulma', arName: 'العلمة', homePrice: 600, deskPrice: 400, communes: ['El Eulma', 'Bazer Sakhra', 'Guellal'] },
+  { code: '69', name: 'Kolea', arName: 'القليعة', homePrice: 500, deskPrice: 350, communes: ['Kolea', 'Ahmer El Ain', 'Chaiba'] },
+];
+
+export function getWilayaByCode(code: string): Wilaya | undefined {
+  return WILAYAS_ALGERIA.find((w) => w.code === code);
+}

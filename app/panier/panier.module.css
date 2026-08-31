@@ -1,5 +1,5 @@
 .page {
-  min-height: 60vh;
+  min-height: 65vh;
   background-color: var(--soft-ivory);
   padding: 3rem 0 4rem;
 }
@@ -12,7 +12,7 @@
 
 .pageTitle {
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2rem, 5vw, 2.8rem);
   font-weight: 400;
   color: var(--text-primary);
   margin-bottom: 0.35rem;
@@ -79,7 +79,7 @@
 .itemImage {
   position: relative;
   width: 100px;
-  height: 120px;
+  height: 125px;
   border-radius: 50% 50% 0 0 / 8% 8% 0 0;
   overflow: hidden;
   background-color: var(--warm-greige);
@@ -105,7 +105,7 @@
 
 .itemName {
   font-family: var(--font-serif);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 500;
   color: var(--deep-mocha);
   margin-bottom: 0.35rem;
@@ -201,57 +201,189 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--deep-mocha);
-  direction: rtl;
 }
 
-/* Summary */
+/* ============================================================
+   CHECKOUT SUMMARY FORM
+   ============================================================ */
 .summary {
   padding: 1.75rem;
-  background-color: var(--warm-greige);
+  background-color: #FAF8F5;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
   height: fit-content;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid #E2DAD0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(78, 64, 52, 0.05);
 }
 
 .summaryTitle {
   font-family: var(--font-serif);
-  font-size: 1.4rem;
-  font-weight: 400;
+  font-size: 1.45rem;
+  font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
+}
+
+.summarySub {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: #7A6B5C;
+  margin-top: -0.85rem;
+}
+
+.checkoutForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #4E4034;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background-color: #FFFFFF;
+  border: 1.5px solid #D8CEBE;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #2B221A;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #4E4034;
+  box-shadow: 0 0 0 3px rgba(78, 64, 52, 0.1);
+}
+
+.deliveryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.deliveryOpt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #FFF;
+  border: 1.5px solid #DDD5C7;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deliveryOpt:hover {
+  border-color: #8C7864;
+}
+
+.deliveryActive {
+  border-color: #4E4034;
+  background-color: #F5EFE6;
+  box-shadow: 0 2px 8px rgba(78, 64, 52, 0.08);
+}
+
+.hiddenRadio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.delivTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2B221A;
+}
+
+.delivPrice {
+  font-size: 0.72rem;
+  color: #8C7864;
+}
+
+.billBox {
+  background-color: #FFFFFF;
+  border: 1px solid #E5DED2;
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .summaryRow {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
-}
-
-.freeShip {
-  font-size: 0.75rem;
-  color: var(--natural-stone);
 }
 
 .summaryDivider {
   height: 1px;
-  background-color: var(--border-color);
+  background-color: #EDE5D8;
+  margin: 0.2rem 0;
 }
 
 .summaryTotal {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.checkoutBtn {
+.totalNumber {
+  font-size: 1.15rem;
+  color: #4E4034;
+}
+
+.errorAlert {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  padding: 0.65rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.confirmBtn {
   width: 100%;
-  text-align: center;
+  padding: 1rem;
+  background-color: #4E4034;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(78, 64, 52, 0.2);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background-color: #2B221A;
 }
 
 .continueLink {
@@ -266,8 +398,87 @@
   color: var(--text-primary);
 }
 
+/* Success Card */
+.successBox {
+  max-width: 540px;
+  margin: 2rem auto;
+  padding: 2.5rem 1.75rem;
+  background-color: #F0FDF4;
+  border: 1.5px solid #86EFAC;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.successIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.successBadge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #15803D;
+  background-color: #DCFCE7;
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 0.6rem;
+}
+
+.successHeading {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  color: #14532D;
+  margin: 0 0 0.5rem;
+}
+
+.successSub {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #166534;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.successRecap {
+  width: 100%;
+  background: #FFF;
+  border: 1px solid #BBF7D0;
+  border-radius: 6px;
+  padding: 1.15rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+
+.successRecapRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: #374151;
+}
+
+.successRecapTotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  color: #15803D;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #BBF7D0;
+}
+
 @media (min-width: 768px) {
   .layout {
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: 1fr 380px;
   }
 }

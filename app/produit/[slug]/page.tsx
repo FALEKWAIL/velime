@@ -6,6 +6,7 @@ import { use } from 'react';
 import { getProductBySlug, formatPrice, getColorHex, isVariantInStock } from '@/data/products';
 import { useSiteData } from '@/hooks/useSiteData';
 import { useCart } from '@/context/CartContext';
+import DirectOrderForm from '@/components/DirectOrderForm/DirectOrderForm';
 import styles from './product.module.css';
 
 interface Props {
@@ -360,41 +361,42 @@ export default function ProductPage({ params }: Props) {
             </div>
           )}
 
-          {/* Add to cart */}
-          <button
-            id="add-to-cart-btn"
-            type="button"
-            className={`${styles.addBtn} ${isTotalOut || !isCurrentSelectionInStock ? styles.addBtnDisabled : ''} ${added ? styles.addBtnSuccess : ''}`}
-            onClick={handleAddToCart}
+          {/* Direct Order Form (Primary Choice) */}
+          <DirectOrderForm
+            product={product}
+            selectedSize={selectedSize}
+            selectedColor={selectedColor}
+            quantity={quantity}
+            onQuantityChange={setQuantity}
             disabled={isTotalOut || !isCurrentSelectionInStock}
-          >
-            {isTotalOut || !isCurrentSelectionInStock
-              ? 'Stock Épuisé pour cette sélection'
-              : added
-              ? 'Article ajouté au panier !'
-              : 'Ajouter au Panier'}
-          </button>
+          />
 
-          {/* Direct WhatsApp Order */}
-          <a
-            href={`https://wa.me/213000000000?text=${getWhatsAppMessage()}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${styles.whatsappOrderBtn} ${!isCurrentSelectionInStock ? styles.whatsappBtnDisabled : ''}`}
-            id="whatsapp-direct-btn"
-          >
-            Commander directement par WhatsApp
-          </a>
+          {/* Secondary Option: Add to cart */}
+          <div className={styles.secondaryActions}>
+            <button
+              id="add-to-cart-btn"
+              type="button"
+              className={`${styles.addBtnSecondary} ${isTotalOut || !isCurrentSelectionInStock ? styles.addBtnDisabled : ''} ${added ? styles.addBtnSuccess : ''}`}
+              onClick={handleAddToCart}
+              disabled={isTotalOut || !isCurrentSelectionInStock}
+            >
+              {isTotalOut || !isCurrentSelectionInStock
+                ? 'Sélection Épuisée'
+                : added
+                ? '✓ Ajouté au panier !'
+                : 'Ajouter au Panier (pour commander plusieurs articles)'}
+            </button>
+          </div>
 
           <div className={styles.features}>
             <div className={styles.feature}>
-              <span>Livraison rapide</span> dans les 58 wilayas d&apos;Algérie
+              <span>Livraison disponible</span> dans les 58 wilayas d&apos;Algérie (Domicile &amp; Bureau)
             </div>
             <div className={styles.feature}>
-              <span>Paiement sécurisé</span> en espèces à la livraison
+              <span>Paiement sécurisé</span> en espèces à la réception de votre colis
             </div>
             <div className={styles.feature}>
-              <span>Emballage soigné</span> & qualité garantie
+              <span>Service client</span> &amp; vérification avant expédition
             </div>
           </div>
         </div>

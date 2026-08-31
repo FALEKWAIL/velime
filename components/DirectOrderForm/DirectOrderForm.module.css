@@ -1,0 +1,440 @@
+.orderContainer {
+  margin-top: 1.75rem;
+  padding: 1.5rem;
+  background-color: #FAF8F5;
+  border-radius: 8px;
+  border: 1.5px solid #E5DED2;
+  box-shadow: 0 4px 16px rgba(78, 64, 52, 0.05);
+}
+
+.formHeader {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid #EDE5D8;
+}
+
+.headerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.expressBadge {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #B45309;
+  background-color: #FEF3C7;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.formTitle {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #2B221A;
+  margin: 0;
+}
+
+.formSubtitle {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: #7A6B5C;
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.formLabel {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #4E4034;
+  letter-spacing: 0.02em;
+}
+
+.req {
+  color: #DC2626;
+}
+
+.formInput,
+.formSelect {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background-color: #FFFFFF;
+  border: 1.5px solid #D8CEBE;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #2B221A;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  border-color: #4E4034;
+  box-shadow: 0 0 0 3px rgba(78, 64, 52, 0.1);
+}
+
+.twoColGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+/* Delivery Type Radio Cards */
+.deliveryTypeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.deliveryTypeCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  background-color: #FFFFFF;
+  border: 1.5px solid #DDD5C7;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deliveryTypeCard:hover {
+  border-color: #8C7864;
+}
+
+.deliveryActive {
+  border-color: #4E4034;
+  background-color: #F5EFE6;
+  box-shadow: 0 2px 8px rgba(78, 64, 52, 0.08);
+}
+
+.radioHidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.deliveryCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.deliveryIcon {
+  font-size: 1.1rem;
+}
+
+.deliveryTitle {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2B221A;
+}
+
+.deliveryFeeText {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #8C7864;
+  margin-left: 1.55rem;
+}
+
+/* Quantity Inline */
+.qtyRowInline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.qtyButtons {
+  display: flex;
+  align-items: center;
+  border: 1px solid #D8CEBE;
+  background: #FFF;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.qtyBtn {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #4E4034;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qtyVal {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Price Recap Box */
+.priceRecapBox {
+  background-color: #FFFFFF;
+  border: 1px solid #E5DED2;
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.recapRow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: #6E5C4E;
+}
+
+.recapDivider {
+  height: 1px;
+  background-color: #EDE5D8;
+  margin: 0.2rem 0;
+}
+
+.recapTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2B221A;
+}
+
+.totalPriceValue {
+  font-size: 1.15rem;
+  color: #4E4034;
+}
+
+.errorAlert {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  padding: 0.65rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid #FCA5A5;
+}
+
+/* Large Submit CTA Button */
+.submitOrderBtn {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background-color: #4E4034;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(78, 64, 52, 0.2);
+  transition: all 0.25s ease;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.submitOrderBtn:hover:not(:disabled) {
+  background-color: #2B221A;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(78, 64, 52, 0.28);
+}
+
+.btnSubtext {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+.btnDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   SUCCESS CONFIRMATION CARD
+   ============================================================ */
+.successCard {
+  margin-top: 1.75rem;
+  padding: 2rem 1.5rem;
+  background-color: #F0FDF4;
+  border: 1.5px solid #86EFAC;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 18px rgba(22, 101, 52, 0.08);
+  animation: fadeInSuccess 0.4s ease;
+}
+
+@keyframes fadeInSuccess {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.successIconWrapper {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background-color: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.successOrderBadge {
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #15803D;
+  background-color: #DCFCE7;
+  padding: 3px 10px;
+  border-radius: 99px;
+  margin-bottom: 0.5rem;
+}
+
+.successTitle {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  color: #14532D;
+  margin: 0 0 0.5rem;
+}
+
+.successDesc {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  color: #166534;
+  line-height: 1.45;
+  max-width: 480px;
+  margin: 0 0 1.25rem;
+}
+
+.successSummaryBox {
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid #BBF7D0;
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.successItemRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #374151;
+}
+
+.successTotalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #BBF7D0;
+  color: #14532D;
+}
+
+.successTotalNumber {
+  font-size: 1.15rem;
+  color: #15803D;
+}
+
+.successActions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.newOrderBtn {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #15803D;
+  color: #FFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.newOrderBtn:hover {
+  background-color: #166534;
+}
+
+.continueShopBtn {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #FFFFFF;
+  color: #15803D;
+  border: 1.5px solid #86EFAC;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.continueShopBtn:hover {
+  background-color: #F0FDF4;
+}
+
+@media (max-width: 480px) {
+  .orderContainer {
+    padding: 1.25rem 1rem;
+  }
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+  .deliveryTypeGrid {
+    grid-template-columns: 1fr;
+  }
+  .successActions {
+    flex-direction: column;
+  }
+}

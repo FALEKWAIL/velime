@@ -53,3 +53,34 @@ export interface CartContextType {
   totalItems: number;
   totalPrice: number;
 }
+
+export type OrderStatus = 'en_attente' | 'confirmee' | 'en_livraison' | 'livree' | 'annulee';
+export type DeliveryType = 'domicile' | 'bureau';
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  productImage: string;
+  price: number;
+  quantity: number;
+  size: string;
+  color?: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  customerName: string;
+  customerPhone: string;
+  wilayaCode: string;
+  wilayaName: string;
+  commune: string;
+  deliveryType: DeliveryType;
+  items: OrderItem[];
+  itemsSubtotal: number;
+  deliveryCost: number;
+  totalAmount: number;
+  status: OrderStatus;
+  notes?: string;
+}
