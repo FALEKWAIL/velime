@@ -1,74 +1,213 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSiteData } from '@/hooks/useSiteData';
 import styles from './CategoriesSection.module.css';
 
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return { ref, visible };
-}
-
 export default function CategoriesSection() {
   const { categories, products } = useSiteData();
-  const header = useReveal();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState(0);
 
-  if (!categories || categories.length === 0) return null;
+  const autoTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const resumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const list = categories && categories.length > 0 ? categories : [];
+  const total = list.length;
+
+  const goToCategory = useCallback((nextIdx: number) => {
+    if (total <= 1 || isTransitioning) return;
+    const normalized = (nextIdx + total) % total;
+    if (normalized === currentIndex) return;
+
+    setPrevIndex(currentIndex);
+    setCurrentIndex(normalized);
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setPrevIndex(null);
+    }, 750); // Duration matches CSS cross-fade animation
+  }, [currentIndex, total, isTransitioning]);
+
+  const handleNext = useCallback(() => {
+    goToCategory(currentIndex + 1);
+  }, [goToCategory, currentIndex]);
+
+  const handlePrev = useCallback(() => {
+    goToCategory(currentIndex - 1);
+  }, [goToCategory, currentIndex]);
+
+  // Auto-slide every 4 seconds
+  useEffect(() => {
+    if (isPaused || total <= 1) return;
+
+    autoTimerRef.current = setInterval(() => {
+      goToCategory(currentIndex + 1);
+    }, 4000);
+
+    return () => {
+      if (autoTimerRef.current) clearInterval(autoTimerRef.current);
+    };
+  }, [isPaused, total, currentIndex, goToCategory]);
+
+  // Touch Swipe Handlers for Mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    setTouchStartX(e.touches[0].clientX);
+    setTouchDeltaX(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const currentX = e.touches[0].clientX;
+    setTouchDeltaX(currentX - touchStartX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX !== null) {
+      if (touchDeltaX < -45) {
+        // Swiped left -> Next
+        handleNext();
+      } else if (touchDeltaX > 45) {
+        // Swiped right -> Prev
+        handlePrev();
+      }
+    }
+    setTouchStartX(null);
+    setTouchDeltaX(0);
+
+    // Resume auto-play after 4s
+    resumeTimerRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 4000);
+  };
+
+  if (!list || list.length === 0) return null;
+
+  const activeCat = list[currentIndex] || list[0];
+  const prevCat = prevIndex !== null ? list[prevIndex] : null;
+
+  const countProducts = (catName: string) => {
+    return products ? products.filter((p) => p.category === catName).length : 0;
+  };
 
   return (
-    <section className={styles.section} id="categories-section">
+    <section
+      className={styles.section}
+      id="categories-section"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className={styles.container}>
-        <div ref={header.ref} className={`${styles.header} reveal ${header.visible ? 'visible' : ''}`}>
-          <p className={styles.preTitle}>COLLECTIONS</p>
-          <h2 className={styles.title}>Nos Catégories</h2>
-          <div className={styles.line} />
+        {/* Title: Découvrir Par Catégories */}
+        <div className={styles.header}>
+          <h2 className={styles.title}>Découvrir Par Catégories</h2>
         </div>
 
-        <div className={styles.grid}>
-          {categories.map((cat, idx) => {
-            const count = products ? products.filter((p) => p.category === cat.name).length : 0;
-            const catImage = cat.image || `/images/p${(idx % 7) + 1}.jpg`;
+        {/* Morphing Arch Dome Card Container */}
+        <div
+          className={styles.cardContainer}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Main Arch Frame */}
+          <div className={styles.archFrame}>
+            {/* Outgoing previous category layer (fading / scaling out) */}
+            {prevCat && (
+              <div className={`${styles.layer} ${styles.layerOutgoing}`} aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={prevCat.image || `/images/p${(prevIndex! % 7) + 1}.jpg`}
+                  alt={prevCat.name}
+                  className={styles.categoryImg}
+                />
+                <div className={styles.overlay} />
+                <div className={styles.overlayContent}>
+                  <h3 className={styles.catName}>{prevCat.name}</h3>
+                  <span className={styles.discoverBtn}>
+                    DÉCOUVRIR <span className={styles.arrowIcon}>→</span>
+                  </span>
+                </div>
+              </div>
+            )}
 
-            return (
+            {/* Incoming / Active category layer (fading / scaling in) */}
+            <div
+              key={`active-cat-${activeCat.id}`}
+              className={`${styles.layer} ${styles.layerActive}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activeCat.image || `/images/p${(currentIndex % 7) + 1}.jpg`}
+                alt={activeCat.name}
+                className={styles.categoryImg}
+              />
+              <div className={styles.overlay} />
+
+              {/* Bottom-left Content with Title & Glass Discover CTA */}
               <Link
-                key={cat.id}
-                href={`/boutique?cat=${encodeURIComponent(cat.name)}`}
-                className={`${styles.card} reveal-scale ${header.visible ? 'visible' : ''}`}
-                style={{ transitionDelay: `${idx * 0.1}s` }}
-                id={`home-category-${cat.slug}`}
+                href={`/boutique?cat=${encodeURIComponent(activeCat.name)}`}
+                className={styles.overlayLink}
+                id={`cat-card-btn-${activeCat.slug}`}
               >
-                <div className={styles.imageWrapper}>
-                  <Image
-                    src={catImage}
-                    alt={cat.name}
-                    fill
-                    className={styles.image}
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                  />
-                  <div className={styles.overlay} />
-                  
-                  <div className={styles.content}>
-                    <h3 className={styles.catName}>{cat.name}</h3>
+                <div className={styles.overlayContent}>
+                  <div className={styles.titleWrapper}>
+                    <h3 className={styles.catName}>{activeCat.name}</h3>
                     <span className={styles.catCount}>
-                      {count} article{count !== 1 ? 's' : ''}
+                      {countProducts(activeCat.name)} articles
                     </span>
                   </div>
+
+                  <span className={styles.discoverBtn}>
+                    DÉCOUVRIR <span className={styles.arrowIcon}>→</span>
+                  </span>
                 </div>
               </Link>
-            );
-          })}
+            </div>
+
+            {/* Subtle Floating Prev/Next Navigation Arrows */}
+            <button
+              type="button"
+              className={`${styles.navArrow} ${styles.navArrowLeft}`}
+              onClick={(e) => { e.preventDefault(); handlePrev(); }}
+              aria-label="Catégorie précédente"
+              id="cat-prev-btn"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className={`${styles.navArrow} ${styles.navArrowRight}`}
+              onClick={(e) => { e.preventDefault(); handleNext(); }}
+              aria-label="Catégorie suivante"
+              id="cat-next-btn"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* Digital Dash / Pill Pagination Indicators */}
+          <div className={styles.paginationRow}>
+            <div className={styles.dashesTrack} role="tablist" aria-label="Catégories carrousel">
+              {list.map((cat, i) => (
+                <button
+                  key={`cat-dash-${cat.id || i}`}
+                  type="button"
+                  className={`${styles.dash} ${i === currentIndex ? styles.dashActive : ''}`}
+                  onClick={() => goToCategory(i)}
+                  aria-label={`Voir la catégorie ${cat.name}`}
+                  id={`cat-dash-${i}`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

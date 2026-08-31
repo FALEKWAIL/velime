@@ -1,151 +1,340 @@
 .section {
   background-color: var(--soft-ivory);
-  padding: 4rem 0 3rem;
+  padding: 4rem 0 3.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .container {
-  max-width: var(--max-width);
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 var(--container-px);
+  padding: 0 1.25rem;
 }
 
+/* ============================================================
+   HEADER: Découvrir Par Catégories
+   ============================================================ */
 .header {
   text-align: center;
-  margin-bottom: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.preTitle {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--cozy-walnut);
-  margin-bottom: 0.4rem;
+  margin-bottom: 2.25rem;
 }
 
 .title {
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-size: clamp(2.1rem, 5vw, 2.9rem);
   font-weight: 400;
   color: var(--deep-mocha);
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0;
 }
 
-.line {
-  width: 40px;
-  height: 1px;
-  background-color: var(--natural-stone);
-  margin-top: 1rem;
-}
-
-/* Category Grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-.card {
-  display: block;
-  text-decoration: none;
-  border-radius: 50% 50% 0 0 / 8% 8% 0 0;
-  overflow: hidden;
-  position: relative;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(78, 64, 52, 0.15);
-}
-
-.imageWrapper {
+/* ============================================================
+   ARCH DOME CARD CONTAINER
+   ============================================================ */
+.cardContainer {
   position: relative;
   width: 100%;
-  padding-bottom: 130%;
-  background-color: var(--warm-greige);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.archFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 3.9;
+  /* Distinct arched dome window silhouette */
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
   overflow: hidden;
+  background-color: #E8E0D7;
+  box-shadow: 0 10px 30px rgba(78, 64, 52, 0.12);
+  user-select: none;
 }
 
-.image {
+/* Layer transitions: crossfade and gentle scale */
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.layerActive {
+  z-index: 2;
+  animation: fadeInZoom 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.layerOutgoing {
+  z-index: 1;
+  animation: fadeOutZoom 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes fadeInZoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes fadeOutZoom {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(4px);
+  }
+}
+
+.categoryImg {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  object-position: center top;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  object-position: center 25%;
+  display: block;
 }
 
-.card:hover .image {
-  transform: scale(1.06);
-}
-
-/* Dark gradient overlay for text readability */
+/* Elegant bottom shadow gradient to make text pop */
 .overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(78, 64, 52, 0.05) 0%,
-    rgba(78, 64, 52, 0.25) 50%,
-    rgba(78, 64, 52, 0.75) 100%
+    rgba(0, 0, 0, 0.02) 0%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0.82) 100%
   );
-  transition: background 0.3s ease;
-  z-index: 1;
+  pointer-events: none;
 }
 
-.card:hover .overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(78, 64, 52, 0.1) 0%,
-    rgba(78, 64, 52, 0.35) 45%,
-    rgba(78, 64, 52, 0.85) 100%
-  );
-}
-
-/* Content */
-.content {
+.overlayLink {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  z-index: 2;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
+  justify-content: flex-end;
+  text-decoration: none;
+  color: inherit;
+  z-index: 3;
+}
+
+/* Bottom-left Content */
+.overlayContent {
+  position: absolute;
+  bottom: 2.2rem;
+  left: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  z-index: 4;
+}
+
+.titleWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .catName {
   font-family: var(--font-serif);
-  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-  font-weight: 400;
-  color: #ffffff;
-  letter-spacing: 0.08em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  font-weight: 500;
+  color: #FFFFFF;
+  line-height: 1.1;
+  margin: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.01em;
 }
 
 .catCount {
   font-family: var(--font-sans);
   font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.15em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(245, 242, 236, 0.85);
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
-@media (min-width: 640px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
+/* Glassmorphism DÉCOUVRIR -> Button (matching screenshot) */
+.discoverBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+}
+
+.overlayLink:hover .discoverBtn {
+  background-color: rgba(255, 255, 255, 0.35);
+  border-color: #FFFFFF;
+  transform: translateX(4px);
+}
+
+.arrowIcon {
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.overlayLink:hover .arrowIcon {
+  transform: translateX(3px);
+}
+
+/* ============================================================
+   FLOATING PREV/NEXT ARROWS
+   ============================================================ */
+.navArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: #2b221a;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.navArrow:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.navArrowLeft {
+  left: 12px;
+}
+
+.navArrowRight {
+  right: 12px;
+}
+
+/* ============================================================
+   DIGITAL PILL / DASH INDICATORS
+   ============================================================ */
+.paginationRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.dashesTrack {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dash {
+  width: 22px;
+  height: 3.5px;
+  border-radius: 99px;
+  background-color: #D9D2C6;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.dash:hover {
+  background-color: #B7A996;
+}
+
+.dashActive {
+  width: 36px;
+  background-color: #4E4034;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+  .section {
+    padding: 3rem 0 2.5rem;
   }
-}
 
-@media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1.5rem;
+  .title {
+    font-size: 1.95rem;
+  }
+
+  .archFrame {
+    aspect-ratio: 3 / 4.1;
+  }
+
+  .overlayContent {
+    bottom: 1.6rem;
+    left: 1.4rem;
+    right: 1.4rem;
+    gap: 0.75rem;
+  }
+
+  .catName {
+    font-size: 1.9rem;
+  }
+
+  .discoverBtn {
+    padding: 0.5rem 1rem;
+    font-size: 0.72rem;
+  }
+
+  .navArrow {
+    width: 32px;
+    height: 32px;
+    font-size: 1.3rem;
+  }
+
+  .navArrowLeft {
+    left: 8px;
+  }
+
+  .navArrowRight {
+    right: 8px;
+  }
+
+  .dash {
+    width: 18px;
+    height: 3px;
+  }
+
+  .dashActive {
+    width: 30px;
   }
 }
