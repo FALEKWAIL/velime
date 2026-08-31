@@ -20,6 +20,7 @@ export interface SiteData {
   products: Product[];
   categories: Category[];
   brands: string[];
+  lookbookPhotos?: string[];
 }
 
 export const defaultSiteData: SiteData = {
@@ -32,6 +33,15 @@ export const defaultSiteData: SiteData = {
   brands: [
     'ZARA', 'MANGO', 'SANDRO', 'MASSIMO DUTTI', 'COS', 'BA&SH',
     '& OTHER STORIES', 'ARKET', 'JACQUEMUS', 'ROUJE', 'SÉZANE', 'IRO PARIS'
+  ],
+  lookbookPhotos: [
+    '/images/p1.jpg',
+    '/images/p2.jpg',
+    '/images/p3.jpg',
+    '/images/p4.jpg',
+    '/images/p5.jpg',
+    '/images/p6.jpg',
+    '/images/p7.jpg',
   ],
 };
 
@@ -53,6 +63,7 @@ export function useSiteData() {
           products: parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts,
           categories: parsed.categories && parsed.categories.length > 0 ? parsed.categories : defaultCategories,
           brands: parsed.brands && parsed.brands.length > 0 ? parsed.brands : defaultSiteData.brands,
+          lookbookPhotos: parsed.lookbookPhotos && parsed.lookbookPhotos.length > 0 ? parsed.lookbookPhotos : defaultSiteData.lookbookPhotos,
         });
       }
     } catch (err) {
@@ -85,6 +96,7 @@ export function useSiteData() {
             heroCtaText: sbSettings?.heroCtaText || prev.heroCtaText,
             heroImage: sbSettings?.heroImage || prev.heroImage,
             brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
+            lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
             categories: sbCategories && sbCategories.length > 0 ? sbCategories : prev.categories,
             products: sbProducts && sbProducts.length > 0 ? sbProducts : prev.products,
           };

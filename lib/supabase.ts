@@ -261,6 +261,7 @@ export async function fetchSiteSettingsFromSupabase(): Promise<Partial<SiteData>
         heroCtaText: data.hero_cta_text || undefined,
         heroImage: data.hero_image || undefined,
         brands: Array.isArray(data.brands) ? data.brands : undefined,
+        lookbookPhotos: Array.isArray(data.lookbook_photos) ? data.lookbook_photos : undefined,
       };
     }
     return null;
@@ -276,23 +277,27 @@ export async function saveSiteSettingsToSupabase(data: {
   heroCtaText?: string;
   heroImage?: string;
   brands?: string[];
+  lookbookPhotos?: string[];
 }): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert(
-        {
-          id: 'default',
-          hero_title: data.heroTitle || 'VELIME',
-          hero_subtitle: data.heroSubtitle || "L'élégance au quotidien",
-          hero_cta_text: data.heroCtaText || 'Découvrir',
-          hero_image: data.heroImage || '/images/hero-fabric.jpg',
-          brands: data.brands || [],
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
+    const payload: any = {
+      id: 'default',
+      hero_title: data.heroTitle || 'VELIME',
+      hero_subtitle: data.heroSubtitle || "L'élégance au quotidien",
+      hero_cta_text: data.heroCtaText || 'Découvrir',
+      hero_image: data.heroImage || '/images/hero-fabric.jpg',
+      brands: data.brands || [],
+      lookbook_photos: data.lookbookPhotos || [],
+      updated_at: new Date().toISOString(),
+    };
+    let { error } = await supabase.from('site_settings').upsert(payload, { onConflict: 'id' });
+
+    if (error && error.message?.includes('lookbook_photos')) {
+      delete payload.lookbook_photos;
+      const res = await supabase.from('site_settings').upsert(payload, { onConflict: 'id' });
+      error = res.error;
+    }
 
     if (error) {
       console.error('Supabase saveSiteSettings error:', error.message);
@@ -344,18 +349,22 @@ export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: 
 
     // 3. Settings
     try {
-      const { error: setErr } = await supabase.from('site_settings').upsert(
-        {
-          id: 'default',
-          hero_title: siteData.heroTitle,
-          hero_subtitle: siteData.heroSubtitle,
-          hero_cta_text: siteData.heroCtaText,
-          hero_image: siteData.heroImage,
-          brands: siteData.brands,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
+      const settingsPayload: any = {
+        id: 'default',
+        hero_title: siteData.heroTitle,
+        hero_subtitle: siteData.heroSubtitle,
+        hero_cta_text: siteData.heroCtaText,
+        hero_image: siteData.heroImage,
+        brands: siteData.brands,
+        lookbook_photos: siteData.lookbookPhotos,
+        updated_at: new Date().toISOString(),
+      };
+      let { error: setErr } = await supabase.from('site_settings').upsert(settingsPayload, { onConflict: 'id' });
+      if (setErr && setErr.message?.includes('lookbook_photos')) {
+        delete settingsPayload.lookbook_photos;
+        const retrySet = await supabase.from('site_settings').upsert(settingsPayload, { onConflict: 'id' });
+        setErr = retrySet.error;
+      }
       if (setErr) {
         console.warn('Supabase site_settings notice:', setErr.message);
       }

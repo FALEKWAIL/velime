@@ -5,6 +5,7 @@
 
 -- MIGRATION RAPIDE (si vos tables existent déjà) :
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS stock_matrix JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS lookbook_photos JSONB DEFAULT '[]'::jsonb;
 
 -- 1. Table des Catégories
 CREATE TABLE IF NOT EXISTS public.categories (

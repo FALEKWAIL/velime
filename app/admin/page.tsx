@@ -24,6 +24,7 @@ export default function AdminPage() {
     products,
     categories,
     brands,
+    lookbookPhotos,
     saveData,
   } = useSiteData();
   
@@ -31,7 +32,7 @@ export default function AdminPage() {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [savedMsg, setSavedMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'hero' | 'brands'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'hero' | 'brands' | 'lookbook'>('products');
 
   // Filter state for products
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
@@ -225,6 +226,67 @@ export default function AdminPage() {
     }
   };
 
+  // Form states for Lookbook
+  const [lookbookList, setLookbookList] = useState<string[]>([]);
+  const [newLookbookUrl, setNewLookbookUrl] = useState('');
+  const [lookbookDragActive, setLookbookDragActive] = useState(false);
+
+  useEffect(() => {
+    if (lookbookPhotos && lookbookPhotos.length > 0) {
+      setLookbookList(lookbookPhotos);
+    }
+  }, [lookbookPhotos]);
+
+  const handleLookbookFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      processImageFile(file, (dataUrl) => {
+        setLookbookList((prev) => [...prev, dataUrl]);
+      });
+    });
+    showNotification('Photos ajoutées au Lookbook ! Pensez à enregistrer.');
+  };
+
+  const handleLookbookDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setLookbookDragActive(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      processImageFile(file, (dataUrl) => {
+        setLookbookList((prev) => [...prev, dataUrl]);
+      });
+    });
+    showNotification('Photos ajoutées au Lookbook ! Pensez à enregistrer.');
+  };
+
+  const handleAddLookbookUrl = () => {
+    if (!newLookbookUrl.trim()) return;
+    setLookbookList((prev) => [...prev, newLookbookUrl.trim()]);
+    setNewLookbookUrl('');
+    showNotification('Photo ajoutée ! Pensez à enregistrer.');
+  };
+
+  const handleRemoveLookbookPhoto = (index: number) => {
+    setLookbookList((prev) => prev.filter((_, i) => i !== index));
+    showNotification('Photo retirée. Pensez à enregistrer.');
+  };
+
+  const handleSaveLookbook = () => {
+    saveData({
+      heroTitle,
+      heroSubtitle,
+      heroCtaText,
+      heroImage,
+      products,
+      categories,
+      brands,
+      lookbookPhotos: lookbookList,
+    });
+    showNotification('Galerie Lookbook enregistrée avec succès !');
+  };
+
   const handleSaveHero = () => {
     saveData({
       heroTitle: heroForm.title,
@@ -234,6 +296,7 @@ export default function AdminPage() {
       products,
       categories,
       brands,
+      lookbookPhotos: lookbookList,
     });
     showNotification('Configuration de l\'accueil enregistrée avec succès !');
   };
@@ -287,6 +350,7 @@ export default function AdminPage() {
         categories: updatedCategories,
         products: updatedProducts,
         brands,
+        lookbookPhotos: lookbookList,
       });
       showNotification(`Catégorie « ${catForm.name} » modifiée.`);
     } else {
@@ -302,6 +366,7 @@ export default function AdminPage() {
         categories: [...categories, newCat],
         products,
         brands,
+        lookbookPhotos: lookbookList,
       });
       showNotification(`Catégorie « ${catForm.name} » ajoutée.`);
     }
@@ -325,6 +390,7 @@ export default function AdminPage() {
       categories: updatedCategories,
       products,
       brands,
+      lookbookPhotos: lookbookList,
     });
     showNotification(`Catégorie « ${catName} » supprimée.`);
   };
@@ -520,6 +586,7 @@ export default function AdminPage() {
         categories,
         products: updatedProducts,
         brands,
+        lookbookPhotos: lookbookList,
       });
       showNotification(`Article « ${prodForm.name} » mis à jour.`);
     } else {
@@ -528,6 +595,7 @@ export default function AdminPage() {
         categories,
         products: [productPayload, ...products],
         brands,
+        lookbookPhotos: lookbookList,
       });
       showNotification(`Article « ${prodForm.name} » créé avec succès.`);
     }
@@ -543,6 +611,7 @@ export default function AdminPage() {
       categories,
       products: updatedProducts,
       brands,
+      lookbookPhotos: lookbookList,
     });
     showNotification(`Article « ${productName} » supprimé.`);
   };
@@ -565,6 +634,7 @@ export default function AdminPage() {
       categories,
       products: updatedProducts,
       brands,
+      lookbookPhotos: lookbookList,
     });
     showNotification('Statut de stock mis à jour.');
   };
@@ -645,6 +715,7 @@ export default function AdminPage() {
         categories,
         products,
         brands: updated,
+        lookbookPhotos: lookbookList,
       });
       showNotification(`Marque « ${name.trim().toUpperCase()} » ajoutée.`);
     }
@@ -657,6 +728,7 @@ export default function AdminPage() {
       categories,
       products,
       brands: updated,
+      lookbookPhotos: lookbookList,
     });
     showNotification('Marque supprimée du bandeau.');
   };
@@ -753,6 +825,15 @@ export default function AdminPage() {
             <TagIcon />
             <span>Bandeau Marques ({brands.length})</span>
           </button>
+
+          <button
+            id="nav-tab-lookbook"
+            className={`${styles.sideNavBtn} ${activeTab === 'lookbook' ? styles.sideNavActive : ''}`}
+            onClick={() => setActiveTab('lookbook')}
+          >
+            <CameraIcon />
+            <span>Galerie Lookbook ({lookbookList.length})</span>
+          </button>
         </nav>
 
         <div className={styles.sidebarBottom}>
@@ -776,12 +857,14 @@ export default function AdminPage() {
               {activeTab === 'categories' && 'Gestion des Catégories'}
               {activeTab === 'hero' && 'Personnalisation de la Page d\'Accueil'}
               {activeTab === 'brands' && 'Bandeau des Marques Inspirantes'}
+              {activeTab === 'lookbook' && 'Galerie Photos Défilantes (Lookbook Porté)'}
             </h1>
             <p className={styles.pageSubtitle}>
               {activeTab === 'products' && 'Matrice dynamique Taille × Couleur, multi-photos et ruptures de stock'}
               {activeTab === 'categories' && 'Ajoutez, modifiez ou supprimez les catégories du catalogue'}
               {activeTab === 'hero' && 'Modifiez le grand titre, slogan et images principales'}
               {activeTab === 'brands' && 'Personnalisez les noms affichés dans le bandeau défilant'}
+              {activeTab === 'lookbook' && 'Téléchargez vos propres photos de créations portées pour les faire défiler sur l\'accueil'}
             </p>
           </div>
 
@@ -1139,6 +1222,96 @@ export default function AdminPage() {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              TAB: LOOKBOOK & SHOWCASE GALLERY
+             ============================================================ */}
+          {activeTab === 'lookbook' && (
+            <div className={styles.tabSection}>
+              <div className={styles.card}>
+                <div className={styles.lookbookHeaderRow}>
+                  <div>
+                    <h2 className={styles.cardSectionTitle}>Photos Défilantes du Lookbook ({lookbookList.length} photos)</h2>
+                    <p className={styles.cardDesc}>
+                      Ces photos s&apos;affichent avec une animation horizontale continue sur la page d&apos;accueil. Téléchargez vos propres photos de tenues portées ci-dessous.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Direct Upload & Dropzone */}
+                <div
+                  className={`${styles.photoUploadDropzone} ${lookbookDragActive ? styles.dropzoneActive : ''}`}
+                  onDragOver={(e) => { e.preventDefault(); setLookbookDragActive(true); }}
+                  onDragLeave={() => setLookbookDragActive(false)}
+                  onDrop={handleLookbookDrop}
+                >
+                  <label className={styles.dropzoneLabel}>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleLookbookFilesUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <div className={styles.dropzoneContent}>
+                      <UploadIcon />
+                      <p className={styles.dropzoneMainText}>
+                        📁 Télécharger vos photos depuis votre téléphone / ordinateur
+                      </p>
+                      <span className={styles.dropzoneSubText}>
+                        Sélectionnez une ou plusieurs photos (JPG, PNG, WEBP) ou glissez-les ici
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Add by URL */}
+                <div className={styles.addImageRow}>
+                  <div className={styles.urlInputRow}>
+                    <input
+                      type="text"
+                      placeholder="Ou coller une URL d'image (ex: /images/p1.jpg ou https://...)"
+                      value={newLookbookUrl}
+                      onChange={(e) => setNewLookbookUrl(e.target.value)}
+                      className={styles.formInput}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddLookbookUrl}
+                      className={styles.addImageBtn}
+                    >
+                      + Ajouter URL
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grid of current Lookbook photos */}
+                <div className={styles.lookbookGrid}>
+                  {lookbookList.map((photoSrc, idx) => (
+                    <div key={idx} className={styles.lookbookCardItem}>
+                      <span className={styles.lookbookCardIndex}>#{idx + 1}</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoSrc} alt={`Lookbook ${idx + 1}`} className={styles.lookbookCardImg} />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLookbookPhoto(idx)}
+                        className={styles.lookbookCardRemoveBtn}
+                        title="Supprimer cette photo"
+                      >
+                        ✕ Supprimer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.lookbookSaveRow}>
+                  <button onClick={handleSaveLookbook} className={styles.saveHeroBtn} id="save-lookbook-btn">
+                    Enregistrer la Galerie Lookbook ({lookbookList.length} photos)
+                  </button>
                 </div>
               </div>
             </div>
@@ -1813,6 +1986,15 @@ function UploadIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="13" r="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

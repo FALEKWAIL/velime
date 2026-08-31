@@ -1,0 +1,192 @@
+.section {
+  background-color: #faf8f5;
+  padding: 4rem 0 3.5rem;
+  overflow: hidden;
+  border-top: 1px solid #ede7dc;
+  border-bottom: 1px solid #ede7dc;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding: 0 var(--container-px);
+}
+
+.topLabel {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #c9ab82;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 400;
+  color: #2b221a;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.goldDivider {
+  width: 45px;
+  height: 1.5px;
+  background-color: #c9ab82;
+  margin: 0.75rem auto;
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #7a6b5c;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* ============================================================
+   HORIZONTAL CONTINUOUS ANIMATED TRACK
+   ============================================================ */
+.marqueeContainer {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Soft blur gradient mask on edges */
+.marqueeContainer::before,
+.marqueeContainer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marqueeContainer::before {
+  left: 0;
+  background: linear-gradient(to right, #faf8f5, transparent);
+}
+
+.marqueeContainer::after {
+  right: 0;
+  background: linear-gradient(to left, #faf8f5, transparent);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+}
+
+.trackInner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.5rem;
+  white-space: nowrap;
+  animation: scrollLookbook 40s linear infinite;
+}
+
+.marqueeContainer:hover .trackInner {
+  animation-play-state: paused;
+}
+
+/* ============================================================
+   PORTRAIT PHOTO CARDS (MATCHING USER SCREENSHOT)
+   ============================================================ */
+.photoCard {
+  position: relative;
+  width: 270px;
+  height: 380px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(43, 34, 26, 0.08);
+  border: 1px solid #e8e2d8;
+  background-color: #e5ded2;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  cursor: pointer;
+}
+
+.photoCard:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(43, 34, 26, 0.15);
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  transition: transform 0.6s ease;
+}
+
+.photoCard:hover .photoImg {
+  transform: scale(1.05);
+}
+
+.cardOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: linear-gradient(to top, rgba(30, 24, 18, 0.75) 0%, transparent 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.photoCard:hover .cardOverlay {
+  opacity: 1;
+}
+
+.overlayBrand {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.2em;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.bottomHint {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: #9c8a77;
+  letter-spacing: 0.08em;
+}
+
+@keyframes scrollLookbook {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 2.5rem 0 2rem;
+  }
+
+  .photoCard {
+    width: 200px;
+    height: 290px;
+  }
+
+  .trackInner {
+    gap: 0.65rem;
+    animation-duration: 28s;
+  }
+}
