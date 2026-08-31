@@ -302,26 +302,6 @@ export default function DirectOrderForm({
           </div>
         </div>
 
-        {/* Quantity in direct form if provided */}
-        {onQuantityChange && (
-          <div className={styles.qtyRowInline}>
-            <span className={styles.formLabel}>Quantité :</span>
-            <div className={styles.qtyButtons}>
-              <button
-                type="button"
-                className={styles.qtyBtn}
-                onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-              >−</button>
-              <span className={styles.qtyVal}>{quantity}</span>
-              <button
-                type="button"
-                className={styles.qtyBtn}
-                onClick={() => onQuantityChange(quantity + 1)}
-              >+</button>
-            </div>
-          </div>
-        )}
-
         {/* Live Calculation Bill */}
         <div className={styles.priceRecapBox}>
           <div className={styles.recapRow}>

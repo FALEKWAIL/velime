@@ -487,68 +487,189 @@
 }
 
 /* ============================================================
-   BUTTONS
+   SELECT OPTION GROUP (MATCHING SCREENSHOT)
    ============================================================ */
-.addBtn {
-  width: 100%;
-  padding: 1.1rem;
-  background-color: var(--deep-mocha);
-  color: #ffffff;
+.selectOptionGroup {
+  margin-bottom: 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.selectOptionLabel {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #2B221A;
+  margin-bottom: 0.45rem;
+  display: block;
 }
 
-.addBtn:hover:not(:disabled) {
-  background-color: var(--cozy-walnut);
-}
-
-.secondaryActions {
-  margin-top: 0.5rem;
+.selectWrapper {
+  position: relative;
   width: 100%;
 }
 
-.addBtnSecondary {
+.dropdownSelect {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  padding-right: 2.5rem;
   background-color: #FFFFFF;
-  color: #4E4034;
-  border: 1.5px solid #D5CCBE;
+  border: 1.5px solid #DDD5C7;
+  border-radius: 4px;
   font-family: var(--font-sans);
-  font-size: 0.76rem;
+  font-size: 0.9rem;
+  color: #2B221A;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s ease;
+}
+
+.dropdownSelect:focus {
+  border-color: #8C7864;
+  box-shadow: 0 0 0 3px rgba(140, 120, 100, 0.12);
+}
+
+.selectChevron {
+  position: absolute;
+  right: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8C7864;
+  pointer-events: none;
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   CART ACTION ROW: [ QTY ] + [ AJOUTER AU PANIER ]
+   ============================================================ */
+.cartActionRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.qtyBox {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #DDD5C7;
+  background: #FFFFFF;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 48px;
+  min-width: 95px;
+}
+
+.qtyBtnSquare {
+  width: 30px;
+  height: 100%;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #4E4034;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.qtyBtnSquare:hover {
+  background-color: #F5EFE6;
+}
+
+.qtyNumberText {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: 0.05em;
-  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #2B221A;
+}
+
+.addToCartBtn {
+  flex: 1;
+  height: 48px;
+  background-color: #D4C3B3;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.addBtnSecondary:hover:not(:disabled) {
-  border-color: #4E4034;
-  background-color: #F8F5F0;
+.addToCartBtn:hover:not(:disabled) {
+  background-color: #BFAEA0;
 }
 
-.addBtnDisabled {
-  background-color: #f7f5f0;
-  border-color: #e2ded5;
-  color: #a39585;
+.addToCartBtn:disabled {
+  background-color: #E2DBD2;
+  color: #9C8E80;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
-.addBtnSuccess {
-  background-color: #22543d !important;
+.addToCartSuccess {
+  background-color: #2E7D32 !important;
   color: #FFFFFF !important;
-  border-color: #22543d !important;
 }
 
-.whatsappOrderBtn:hover {
-  background-color: #1da851;
+/* ============================================================
+   COMMANDER MAINTENANT (FULL WIDTH BUTTON)
+   ============================================================ */
+.orderNowBtn {
+  width: 100%;
+  height: 48px;
+  background-color: #D4C3B3;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orderNowBtn:hover:not(:disabled) {
+  background-color: #BFAEA0;
+}
+
+.orderNowBtn:disabled {
+  background-color: #E2DBD2;
+  color: #9C8E80;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.orderFormExpandedWrapper {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideDownForm 0.35s ease;
+}
+
+@keyframes slideDownForm {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .variantAvailableBox {

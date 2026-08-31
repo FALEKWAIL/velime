@@ -27,21 +27,9 @@ export default function ProductPage({ params }: Props) {
   const { addItem } = useCart();
   const productColors = useMemo(() => product.colors && product.colors.length > 0 ? product.colors : [], [product.colors]);
 
-  const [selectedColor, setSelectedColor] = useState(() => {
-    if (productColors.length > 0) {
-      // Pick first available color if possible
-      const firstAvail = productColors.find(c => product.sizes.some(sz => isVariantInStock(product, sz, c)));
-      return firstAvail || productColors[0];
-    }
-    return '';
-  });
-
-  const [selectedSize, setSelectedSize] = useState(() => {
-    // Pick first available size for the initial color
-    const initialColor = productColors.length > 0 ? productColors[0] : undefined;
-    const firstAvail = product.sizes.find(sz => isVariantInStock(product, sz, initialColor));
-    return firstAvail || '';
-  });
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
@@ -124,13 +112,36 @@ export default function ProductPage({ params }: Props) {
     setTimeout(() => setAdded(false), 2500);
   };
 
-  // Build WhatsApp pre-filled message
-  const getWhatsAppMessage = () => {
-    let msg = `Bonjour, je souhaite commander l'article : ${product.name} (${formatPrice(product.price)})`;
-    if (selectedColor) msg += `\n• Couleur : ${selectedColor}`;
-    if (selectedSize) msg += `\n• Taille : ${selectedSize}`;
-    if (quantity > 1) msg += `\n• Quantité : ${quantity}`;
-    return encodeURIComponent(msg);
+  const handleOrderNowClick = () => {
+    if (isTotalOut) return;
+
+    // Check color selection if product has colors
+    if (productColors.length > 0 && !selectedColor) {
+      setError('Veuillez sélectionner une couleur.');
+      return;
+    }
+
+    // Check size selection
+    if (!selectedSize) {
+      setError('Veuillez sélectionner une taille.');
+      return;
+    }
+
+    // Check availability
+    if (!isVariantInStock(product, selectedSize, selectedColor || undefined)) {
+      setError(`Cette taille (${selectedSize}) est actuellement épuisée en ${selectedColor || 'cette variante'}.`);
+      return;
+    }
+
+    setError('');
+    setIsOrderFormOpen(true);
+
+    setTimeout(() => {
+      const el = document.getElementById('direct-order-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 120);
   };
 
   return (
@@ -161,34 +172,64 @@ export default function ProductPage({ params }: Props) {
             ) : isPartialOut ? (
               <span className={styles.badgePartialOut}>Stock Limité</span>
             ) : product.badge ? (
-              <span className={styles.badgeCustom}>{product.badge}</span>
-            ) : product.isNew ? (
-              <span className={styles.badgeNew}>Nouveau</span>
+              <span className={styles.badge}>{product.badge}</span>
             ) : null}
 
-            {/* Digital Photo Index on Mobile */}
+            {/* Gallery Arrows */}
             {galleryImages.length > 1 && (
-              <div className={styles.digitalPhotoBadge}>
-                <span>{selectedImageIndex + 1}</span>
-                <span className={styles.digitalPhotoSep}>/</span>
-                <span>{galleryImages.length}</span>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
+                  className={`${styles.imageArrow} ${styles.imageArrowPrev}`}
+                  aria-label="Photo précédente"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length)}
+                  className={`${styles.imageArrow} ${styles.imageArrowNext}`}
+                  aria-label="Photo suivante"
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            {/* Dots Indicator for Mobile */}
+            {galleryImages.length > 1 && (
+              <div className={styles.dotsRow}>
+                {galleryImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`${styles.dot} ${idx === selectedImageIndex ? styles.dotActive : ''}`}
+                    aria-label={`Voir photo ${idx + 1}`}
+                  />
+                ))}
               </div>
             )}
           </div>
 
-          {/* Thumbnail Gallery Row */}
+          {/* Thumbnails Row */}
           {galleryImages.length > 1 && (
-            <div className={styles.galleryThumbRow}>
-              {galleryImages.map((img, idx) => (
+            <div className={styles.thumbRow}>
+              {galleryImages.map((imgSrc, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className={`${styles.thumbBtn} ${idx === selectedImageIndex ? styles.thumbBtnActive : ''}`}
                   onClick={() => setSelectedImageIndex(idx)}
-                  aria-label={`Afficher la photo ${idx + 1}`}
+                  className={`${styles.thumbBtn} ${idx === selectedImageIndex ? styles.thumbBtnActive : ''}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt={`Miniature ${idx + 1}`} className={styles.thumbImg} />
+                  <Image
+                    src={imgSrc}
+                    alt={`${product.name} vue ${idx + 1}`}
+                    width={70}
+                    height={85}
+                    className={styles.thumbImg}
+                  />
                 </button>
               ))}
             </div>
@@ -196,12 +237,12 @@ export default function ProductPage({ params }: Props) {
         </div>
 
         {/* ============================================================
-            DETAILS SECTION
+            PRODUCT DETAILS & FORM
            ============================================================ */}
         <div className={styles.details}>
-          <p className={styles.category}>{product.category}</p>
-          <h1 className={styles.name}>{product.name}</h1>
-          
+          <div className={styles.category}>{product.category}</div>
+          <h1 className={styles.title}>{product.name}</h1>
+
           <div className={styles.priceRow}>
             <span className={styles.price}>{formatPrice(product.price)}</span>
             {product.originalPrice && (
@@ -209,16 +250,16 @@ export default function ProductPage({ params }: Props) {
             )}
           </div>
 
-          {/* Stock state indicator banner */}
+          {/* Stock Notification Banner */}
           {isTotalOut ? (
-            <div className={styles.stockAlertTotal}>
-              <strong>Article actuellement en rupture totale</strong>
-              <p>Cet article n&apos;est plus disponible pour le moment.</p>
+            <div className={styles.stockAlertTotalOut}>
+              <strong>Article Épuisé</strong>
+              <p>Cet article est actuellement en rupture de stock totale.</p>
             </div>
           ) : isPartialOut ? (
-            <div className={styles.stockAlertPartial}>
+            <div className={styles.stockAlertPartialOut}>
               <strong>Rupture partielle sur cet article</strong>
-              <p>Certaines combinaisons de tailles et couleurs sont épuisées. Choisissez votre option ci-dessous.</p>
+              <p>Certaines tailles ou couleurs sont épuisées. Choisissez vos options ci-dessous.</p>
             </div>
           ) : null}
 
@@ -229,99 +270,63 @@ export default function ProductPage({ params }: Props) {
           <div className={styles.divider} />
 
           {/* ============================================================
-              COLOR SELECTOR
+              DROPDOWN SELECTORS (LIKE SCREENSHOT)
              ============================================================ */}
           {productColors.length > 0 && (
-            <div className={styles.colorSection}>
-              <div className={styles.optionHeaderRow}>
-                <p className={styles.optionLabel}>1. Choisissez une couleur</p>
-                {selectedColor && (
-                  <span className={styles.selectedOptionDisplay}>
-                    Couleur : <strong>{selectedColor}</strong>
-                  </span>
-                )}
-              </div>
-
-              <div className={styles.colorGrid}>
-                {productColors.map((color) => {
-                  // A color is globally available if at least 1 size is in stock for this color
-                  const isColorAvailableAnySize = product.sizes.some(sz => isVariantInStock(product, sz, color));
-                  const isSelected = selectedColor === color;
-                  const hexCode = getColorHex(color);
-
-                  return (
-                    <button
-                      key={color}
-                      id={`color-${color.toLowerCase().replace(/\s+/g, '-')}`}
-                      type="button"
-                      disabled={isTotalOut || (!isColorAvailableAnySize && isPartialOut)}
-                      className={`${styles.colorBtn} 
-                        ${isSelected ? styles.colorBtnActive : ''} 
-                        ${!isColorAvailableAnySize && isPartialOut ? styles.colorBtnDisabled : ''}
-                        ${isTotalOut ? styles.colorBtnTotalOut : ''}
-                      `}
-                      onClick={() => handleColorChange(color)}
-                      title={!isColorAvailableAnySize && isPartialOut ? `${color} (Épuisé)` : color}
-                    >
-                      <span
-                        className={styles.colorCircle}
-                        style={{ backgroundColor: hexCode }}
-                      />
-                      <span className={styles.colorNameText}>{color}</span>
-                      {!isColorAvailableAnySize && isPartialOut && (
-                        <span className={styles.optionEpuiseTag}>Épuisé</span>
-                      )}
-                    </button>
-                  );
-                })}
+            <div className={styles.selectOptionGroup}>
+              <label htmlFor="color-select" className={styles.selectOptionLabel}>
+                Couleur
+              </label>
+              <div className={styles.selectWrapper}>
+                <select
+                  id="color-select"
+                  className={styles.dropdownSelect}
+                  value={selectedColor}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  disabled={isTotalOut}
+                >
+                  <option value="">Choisir une option</option>
+                  {productColors.map((color) => {
+                    const isColorAvail = product.sizes.some((sz) => isVariantInStock(product, sz, color));
+                    return (
+                      <option key={color} value={color} disabled={!isColorAvail && isPartialOut}>
+                        {color} {!isColorAvail && isPartialOut ? '(Épuisé)' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                <span className={styles.selectChevron}>▾</span>
               </div>
             </div>
           )}
 
-          {/* ============================================================
-              SIZE SELECTOR (DYNAMICALLY FILTERED BY SELECTED COLOR)
-             ============================================================ */}
-          <div className={styles.sizeSection}>
-            <div className={styles.optionHeaderRow}>
-              <p className={styles.optionLabel}>2. Choisissez une taille</p>
-              {selectedSize && (
-                <span className={styles.selectedOptionDisplay}>
-                  Taille : <strong>{selectedSize}</strong>
-                </span>
-              )}
-            </div>
-
-            <div className={styles.sizeGrid}>
-              {product.sizes.map((size) => {
-                // Check if this specific size is in stock for currently selected color
-                const isSizeInStockForColor = isVariantInStock(product, size, selectedColor || undefined);
-                const isSelected = selectedSize === size;
-
-                return (
-                  <button
-                    key={size}
-                    id={`size-${size}`}
-                    type="button"
-                    disabled={isTotalOut || (!isSizeInStockForColor && isPartialOut)}
-                    className={`${styles.sizeBtn} 
-                      ${isSelected ? styles.sizeBtnActive : ''} 
-                      ${!isSizeInStockForColor && isPartialOut ? styles.sizeBtnDisabled : ''}
-                      ${isTotalOut ? styles.sizeBtnTotalOut : ''}
-                    `}
-                    onClick={() => {
-                      if (isSizeInStockForColor || !isPartialOut) {
-                        setSelectedSize(size);
-                        setError('');
-                      }
-                    }}
-                  >
-                    <span className={styles.sizeNameText}>{size}</span>
-                    {!isSizeInStockForColor && isPartialOut && (
-                      <span className={styles.optionEpuiseTag}>Épuisé</span>
-                    )}
-                  </button>
-                );
-              })}
+          {/* Size Dropdown */}
+          <div className={styles.selectOptionGroup}>
+            <label htmlFor="size-select" className={styles.selectOptionLabel}>
+              Taille
+            </label>
+            <div className={styles.selectWrapper}>
+              <select
+                id="size-select"
+                className={styles.dropdownSelect}
+                value={selectedSize}
+                onChange={(e) => {
+                  setSelectedSize(e.target.value);
+                  setError('');
+                }}
+                disabled={isTotalOut}
+              >
+                <option value="">Choisir une option</option>
+                {product.sizes.map((size) => {
+                  const isSizeInStock = isVariantInStock(product, size, selectedColor || undefined);
+                  return (
+                    <option key={size} value={size} disabled={!isSizeInStock && isPartialOut}>
+                      {size} {!isSizeInStock && isPartialOut ? '(Épuisé)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              <span className={styles.selectChevron}>▾</span>
             </div>
           </div>
 
@@ -339,54 +344,64 @@ export default function ProductPage({ params }: Props) {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          {/* Quantity */}
-          {!isTotalOut && isCurrentSelectionInStock && (
-            <div className={styles.qtySection}>
-              <p className={styles.optionLabel}>Quantité</p>
-              <div className={styles.qtyRow}>
-                <button
-                  className={styles.qtyBtn}
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  id="qty-decrease"
-                  type="button"
-                >−</button>
-                <span className={styles.qtyVal}>{quantity}</span>
-                <button
-                  className={styles.qtyBtn}
-                  onClick={() => setQuantity(quantity + 1)}
-                  id="qty-increase"
-                  type="button"
-                >+</button>
-              </div>
+          {/* ============================================================
+              QUANTITY + AJOUTER AU PANIER ROW (EXACTLY LIKE SCREENSHOT)
+             ============================================================ */}
+          <div className={styles.cartActionRow}>
+            <div className={styles.qtyBox}>
+              <button
+                type="button"
+                className={styles.qtyBtnSquare}
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                aria-label="Diminuer quantité"
+              >−</button>
+              <span className={styles.qtyNumberText}>{quantity}</span>
+              <button
+                type="button"
+                className={styles.qtyBtnSquare}
+                onClick={() => setQuantity(quantity + 1)}
+                aria-label="Augmenter quantité"
+              >+</button>
             </div>
-          )}
 
-          {/* Direct Order Form (Primary Choice) */}
-          <DirectOrderForm
-            product={product}
-            selectedSize={selectedSize}
-            selectedColor={selectedColor}
-            quantity={quantity}
-            onQuantityChange={setQuantity}
-            disabled={isTotalOut || !isCurrentSelectionInStock}
-          />
-
-          {/* Secondary Option: Add to cart */}
-          <div className={styles.secondaryActions}>
             <button
               id="add-to-cart-btn"
               type="button"
-              className={`${styles.addBtnSecondary} ${isTotalOut || !isCurrentSelectionInStock ? styles.addBtnDisabled : ''} ${added ? styles.addBtnSuccess : ''}`}
+              className={`${styles.addToCartBtn} ${added ? styles.addToCartSuccess : ''}`}
               onClick={handleAddToCart}
-              disabled={isTotalOut || !isCurrentSelectionInStock}
+              disabled={isTotalOut || (!isCurrentSelectionInStock && selectedSize !== '')}
             >
-              {isTotalOut || !isCurrentSelectionInStock
-                ? 'Sélection Épuisée'
-                : added
-                ? '✓ Ajouté au panier !'
-                : 'Ajouter au Panier (pour commander plusieurs articles)'}
+              {added ? '✓ Article ajouté !' : 'Ajouter au panier'}
             </button>
           </div>
+
+          {/* ============================================================
+              COMMANDER MAINTENANT (FULL WIDTH BUTTON)
+             ============================================================ */}
+          <button
+            id="order-now-trigger-btn"
+            type="button"
+            className={styles.orderNowBtn}
+            onClick={handleOrderNowClick}
+            disabled={isTotalOut}
+          >
+            {isOrderFormOpen ? 'Informations de Commande Directe ▾' : 'Commander maintenant'}
+          </button>
+
+          {/* ============================================================
+              DIRECT ORDER FORM SECTION (EXPANDED WHEN CLICKED)
+             ============================================================ */}
+          {isOrderFormOpen && (
+            <div className={styles.orderFormExpandedWrapper} id="direct-order-section">
+              <DirectOrderForm
+                product={product}
+                selectedSize={selectedSize}
+                selectedColor={selectedColor}
+                quantity={quantity}
+                disabled={isTotalOut || !isCurrentSelectionInStock}
+              />
+            </div>
+          )}
 
           <div className={styles.features}>
             <div className={styles.feature}>
