@@ -46,7 +46,6 @@ export default function HeroSection() {
 
       {/* Center content — Heralta style */}
       <div className={`${styles.content} ${titleVisible ? styles.contentVisible : ''}`}>
-        <p className={styles.preLabel}>Boutique</p>
         <h1 className={styles.brandName}>{heroTitle || 'VELIME'}</h1>
         <div className={styles.divider} />
         <p className={styles.tagline}>{heroSubtitle || "L'élégance au quotidien"}</p>

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Product, Category, StockStatus, StockVariant } from '@/types';
-import { useSiteData, defaultSiteData } from '@/hooks/useSiteData';
+import { useSiteData, defaultSiteData, HERO_IMAGE_KEY } from '@/hooks/useSiteData';
 import {
   formatPrice,
   COLOR_PALETTE,
@@ -35,21 +35,20 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [savedMsg, setSavedMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'categories' | 'hero' | 'brands' | 'lookbook'>('orders');
-
-  // Filter state for orders
-  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
-  const [orderSearchQuery, setOrderSearchQuery] = useState('');
-
-  // Filter state for products
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+  const [savedMsg, setSavedMsg] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
 
-  // Modals
+  // Orders management filters & search
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
+
+  // Modal states for Product
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  // Modal states for Category
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -99,12 +98,7 @@ export default function AdminPage() {
   });
 
   // Form states for Category
-  const [catForm, setCatForm] = useState<{
-    name: string;
-    slug: string;
-    description: string;
-    image: string;
-  }>({
+  const [catForm, setCatForm] = useState({
     name: '',
     slug: '',
     description: '',
@@ -118,15 +112,18 @@ export default function AdminPage() {
     ctaText: '',
     image: '',
   });
+  const [heroFormDirty, setHeroFormDirty] = useState(false);
 
   useEffect(() => {
-    setHeroForm({
-      title: heroTitle || 'VELIME',
-      subtitle: heroSubtitle || "L'élégance au quotidien",
-      ctaText: heroCtaText || 'Découvrir',
-      image: heroImage || '/images/hero-fabric.jpg',
-    });
-  }, [heroTitle, heroSubtitle, heroCtaText, heroImage]);
+    if (!heroFormDirty) {
+      setHeroForm({
+        title: heroTitle || 'VELIME',
+        subtitle: heroSubtitle || "L'élégance au quotidien",
+        ctaText: heroCtaText || 'Découvrir',
+        image: heroImage || '/images/hero-fabric.jpg',
+      });
+    }
+  }, [heroTitle, heroSubtitle, heroCtaText, heroImage, heroFormDirty]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +190,9 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (file) {
       processImageFile(file, (dataUrl) => {
+        setHeroFormDirty(true);
         setHeroForm((h) => ({ ...h, image: dataUrl }));
-        showNotification('Photo de fond chargée ! Cliquez sur Enregistrer pour valider.');
+        showNotification('Photo de fond chargée ! Cliquez sur « Enregistrer la page d\'accueil » pour valider.');
       });
     }
   };
@@ -205,8 +203,9 @@ export default function AdminPage() {
     const file = e.dataTransfer.files?.[0];
     if (file) {
       processImageFile(file, (dataUrl) => {
+        setHeroFormDirty(true);
         setHeroForm((h) => ({ ...h, image: dataUrl }));
-        showNotification('Photo de fond chargée ! Cliquez sur Enregistrer pour valider.');
+        showNotification('Photo de fond chargée ! Cliquez sur « Enregistrer la page d\'accueil » pour valider.');
       });
     }
   };
@@ -245,7 +244,7 @@ export default function AdminPage() {
     }
   }, [lookbookPhotos]);
 
-  const handleLookbookFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddLookbookPhotoFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     Array.from(files).forEach((file) => {
@@ -253,7 +252,7 @@ export default function AdminPage() {
         setLookbookList((prev) => [...prev, dataUrl]);
       });
     });
-    showNotification('Photos ajoutées au Lookbook ! Pensez à enregistrer.');
+    showNotification('Photos ajoutées ! Pensez à enregistrer.');
   };
 
   const handleLookbookDrop = (e: React.DragEvent) => {
@@ -266,7 +265,7 @@ export default function AdminPage() {
         setLookbookList((prev) => [...prev, dataUrl]);
       });
     });
-    showNotification('Photos ajoutées au Lookbook ! Pensez à enregistrer.');
+    showNotification('Photos ajoutées ! Pensez à enregistrer.');
   };
 
   const handleAddLookbookUrl = () => {
@@ -286,7 +285,7 @@ export default function AdminPage() {
       heroTitle,
       heroSubtitle,
       heroCtaText,
-      heroImage,
+      heroImage: heroForm.image || heroImage,
       products,
       categories,
       brands,
@@ -296,17 +295,24 @@ export default function AdminPage() {
   };
 
   const handleSaveHero = () => {
+    const updatedHeroImage = heroForm.image || heroImage || '/images/hero-fabric.jpg';
     saveData({
       heroTitle: heroForm.title,
       heroSubtitle: heroForm.subtitle,
       heroCtaText: heroForm.ctaText,
-      heroImage: heroForm.image,
+      heroImage: updatedHeroImage,
       products,
       categories,
       brands,
       lookbookPhotos: lookbookList,
     });
-    showNotification('Configuration de l\'accueil enregistrée avec succès !');
+    if (updatedHeroImage) {
+      try {
+        localStorage.setItem(HERO_IMAGE_KEY, updatedHeroImage);
+      } catch {}
+    }
+    setHeroFormDirty(false);
+    showNotification('Photo de fond et configuration de l\'accueil enregistrées avec succès !');
   };
 
   const handleResetDefaults = () => {
@@ -1029,7 +1035,7 @@ export default function AdminPage() {
                       key={filter.id}
                       type="button"
                       className={`${styles.orderPillBtn} ${orderStatusFilter === filter.id ? styles.orderPillActive : ''}`}
-                      onClick={() => setOrderStatusFilter(filter.id)}
+                      onClick={() => setOrderStatusFilter(filter.id as OrderStatus | 'all')}
                     >
                       {filter.label}
                     </button>
@@ -1461,9 +1467,15 @@ export default function AdminPage() {
                 {/* Preview */}
                 <div className={styles.card}>
                   <h2 className={styles.cardSectionTitle}>Aperçu du Rendu</h2>
-                  <div className={styles.heroLivePreview}>
+                  <div
+                    className={styles.heroLivePreview}
+                    style={{
+                      backgroundImage: `url(${heroForm.image || heroImage || '/images/hero-fabric.jpg'})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  >
                     <div className={styles.previewContent}>
-                      <span className={styles.previewBoutiqueLabel}>Boutique</span>
                       <h2 className={styles.previewBrandTitle}>{heroForm.title || 'VELIME'}</h2>
                       <div className={styles.previewLine} />
                       <p className={styles.previewTagline}>{heroForm.subtitle}</p>
@@ -1537,7 +1549,7 @@ export default function AdminPage() {
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={handleLookbookFilesUpload}
+                      onChange={handleAddLookbookPhotoFiles}
                       style={{ display: 'none' }}
                     />
                     <div className={styles.dropzoneContent}>
