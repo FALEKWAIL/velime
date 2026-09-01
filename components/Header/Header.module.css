@@ -2,12 +2,14 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--natural-stone);
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #ECE7E1;
   transition: box-shadow 0.3s ease;
+  --header-text: #000000;
 }
 
 .header.scrolled {
-  box-shadow: 0 2px 20px rgba(78, 64, 52, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .inner {
@@ -27,30 +29,23 @@
   flex-direction: column;
   align-items: center;
   line-height: 1;
-  gap: 0px;
   text-decoration: none;
   justify-self: center;
 }
 
-.logoSub {
-  font-family: var(--font-sans);
-  font-size: 0.6rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--deep-mocha);
-  opacity: 0.75;
-  font-weight: 400;
-  margin-bottom: 1px;
-}
-
 .logoMain {
   font-family: var(--font-serif);
-  font-size: 2.4rem;
-  font-weight: 400;
+  font-size: 2.35rem;
+  font-weight: 500;
   font-style: italic;
-  color: var(--deep-mocha);
+  color: #000000;
   letter-spacing: -0.01em;
   line-height: 1;
+  transition: opacity 0.2s ease;
+}
+
+.logo:hover .logoMain {
+  opacity: 0.8;
 }
 
 /* Icon buttons */
@@ -58,17 +53,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--deep-mocha);
+  color: #000000;
   background: none;
   border: none;
   padding: 0.5rem;
   cursor: pointer;
   border-radius: 50%;
-  transition: var(--transition);
+  transition: background-color 0.2s ease;
 }
 
 .iconBtn:hover {
-  background-color: rgba(78, 64, 52, 0.1);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Right actions */
@@ -84,28 +79,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--deep-mocha);
+  color: #000000;
   padding: 0.5rem;
   position: relative;
   border-radius: 50%;
-  transition: var(--transition);
+  transition: background-color 0.2s ease;
 }
 
 .cartBtn:hover {
-  background-color: rgba(78, 64, 52, 0.1);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .cartBadge {
   position: absolute;
   top: 2px;
   right: 2px;
-  background-color: var(--deep-mocha);
-  color: var(--soft-ivory);
+  background-color: #000000;
+  color: #FFFFFF;
   width: 16px;
   height: 16px;
   border-radius: 50%;
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,8 +109,8 @@
 
 /* Search bar */
 .searchBar {
-  border-top: 1px solid rgba(78, 64, 52, 0.15);
-  background-color: var(--soft-ivory);
+  border-top: 1px solid #ECE7E1;
+  background-color: #FAFAFA;
   animation: slideDown 0.25s ease;
 }
 
@@ -141,40 +136,39 @@
   outline: none;
   font-family: var(--font-sans);
   font-size: 0.9rem;
-  color: var(--text-primary);
-  placeholder-color: var(--text-muted);
+  color: #000000;
 }
 
 .searchInput::placeholder {
-  color: var(--natural-stone);
+  color: #9C8E80;
 }
 
 .searchSubmit {
-  color: var(--cozy-walnut);
+  color: #000000;
   background: none;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: var(--transition);
+  transition: opacity 0.2s ease;
 }
 
 .searchSubmit:hover {
-  color: var(--deep-mocha);
+  opacity: 0.7;
 }
 
 .searchClose {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  color: #666666;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.25rem;
-  transition: var(--transition);
+  transition: color 0.2s ease;
 }
 
 .searchClose:hover {
-  color: var(--text-primary);
+  color: #000000;
 }
 
 @media (max-width: 768px) {
@@ -183,15 +177,11 @@
     height: 60px;
   }
   .logoMain {
-    font-size: 1.8rem;
-  }
-  .logoSub {
-    font-size: 0.5rem;
+    font-size: 1.85rem;
   }
   .iconBtn,
   .cartBtn {
     padding: 0.6rem;
-    /* Bigger tap target on mobile */
     min-width: 44px;
     min-height: 44px;
   }
@@ -203,22 +193,7 @@
     height: 56px;
   }
   .logoMain {
-    font-size: 1.6rem;
+    font-size: 1.65rem;
     letter-spacing: -0.01em;
   }
-}
-
-/* Adaptive text: natural-stone header → mocha text (readable on medium background) */
-.header {
-  --header-text: var(--deep-mocha);
-}
-
-.iconBtn,
-.cartBtn {
-  color: var(--header-text);
-}
-
-.logoSub,
-.logoMain {
-  color: var(--header-text);
 }

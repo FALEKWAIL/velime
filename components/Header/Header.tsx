@@ -47,7 +47,6 @@ export default function Header() {
 
           {/* Center: Logo */}
           <Link href="/" className={styles.logo} id="header-logo">
-            <span className={styles.logoSub}>Boutique</span>
             <span className={styles.logoMain}>Velime</span>
           </Link>
 
