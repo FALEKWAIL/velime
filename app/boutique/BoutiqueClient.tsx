@@ -26,7 +26,7 @@ export default function BoutiqueClient() {
   return (
     <div className={styles.page}>
       <div className={styles.heroBar}>
-        <h1 className={styles.pageTitle}>La Boutique</h1>
+        <h1 className={styles.pageTitle}>Collection</h1>
         <p className={styles.subtitle}>{filtered.length} article{filtered.length !== 1 ? 's' : ''}</p>
       </div>
 

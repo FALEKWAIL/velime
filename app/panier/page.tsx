@@ -147,7 +147,7 @@ export default function PanierPage() {
               <p className={styles.emptyText}>Votre panier est actuellement vide.</p>
             </div>
             <Link href="/boutique" className="btn-primary" id="back-to-shop-btn">
-              Retour à la boutique
+              Découvrir la collection
             </Link>
           </div>
         </div>

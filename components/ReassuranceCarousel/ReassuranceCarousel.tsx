@@ -12,19 +12,19 @@ interface ReassuranceSlide {
 const slides: ReassuranceSlide[] = [
   {
     id: 0,
-    label: 'VELIME BOUTIQUE',
+    label: 'VELIME',
     title: 'Livraison rapide & sécurisée',
     description: 'Livraison rapide partout en Algérie avec suivi et emballage soigné.',
   },
   {
     id: 1,
-    label: 'VELIME BOUTIQUE',
+    label: 'VELIME',
     title: 'Paiement à la livraison',
     description: 'Payez uniquement à la réception de votre commande, en toute confiance.',
   },
   {
     id: 2,
-    label: 'VELIME BOUTIQUE',
+    label: 'VELIME',
     title: 'Service client actif',
     description: 'Support rapide via WhatsApp pour répondre à toutes vos questions.',
   },

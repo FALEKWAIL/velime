@@ -41,7 +41,7 @@ export default function RechercheClient() {
           <div className={styles.noResults}>
             <p>Aucun résultat pour « {q} ».</p>
             <a href="/boutique" className="btn-primary" id="search-browse-btn">
-              Parcourir la boutique
+              Parcourir la collection
             </a>
           </div>
         ) : (

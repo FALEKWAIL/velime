@@ -44,7 +44,7 @@ export default function InstagramGrid() {
           className={styles.handle}
           id="instagram-link"
         >
-          @VELIME_BOUTIQUE
+          @VELIME
         </a>
       </div>
 

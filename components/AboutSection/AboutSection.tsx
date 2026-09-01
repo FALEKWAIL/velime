@@ -39,14 +39,14 @@ export default function AboutSection() {
 
       {/* Text */}
       <div ref={txt.ref} className={`${styles.textBlock} reveal ${txt.visible ? 'visible' : ''}`}>
-        <p className={styles.label}>VELIME BOUTIQUE</p>
+        <p className={styles.label}>VELIME</p>
         <h2 className={styles.title}>
           Une mode inspirée par<br />
           l&apos;élégance moderne.
         </h2>
         <div className={styles.divider} />
         <p className={styles.body}>
-          Velime Boutique propose une sélection de vêtements femme tendance,
+          Velime propose une sélection de vêtements femme tendance,
           élégants et soigneusement choisis pour accompagner chaque femme avec confiance.
         </p>
         <p className={styles.body}>
@@ -54,7 +54,7 @@ export default function AboutSection() {
           sublimer votre quotidien avec simplicité et raffinement.
         </p>
         <Link href="/boutique" className={styles.cta} id="about-shop-btn">
-          Découvrir la boutique
+          Découvrir la collection
         </Link>
       </div>
     </section>

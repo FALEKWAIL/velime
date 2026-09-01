@@ -1101,7 +1101,7 @@ export default function AdminPage() {
                                 📞 {ord.customerPhone}
                               </a>
                               <a
-                                href={`https://wa.me/213${ord.customerPhone.replace(/^0/, '')}?text=Bonjour%20${encodeURIComponent(ord.customerName)},%20je%20vous%20contacte%20concernant%20votre%20commande%20${ord.orderNumber}%20sur%20Velime%20Boutique.`}
+                                href={`https://wa.me/213${ord.customerPhone.replace(/^0/, '')}?text=Bonjour%20${encodeURIComponent(ord.customerName)},%20je%20vous%20contacte%20concernant%20votre%20commande%20${ord.orderNumber}%20sur%20Velime.`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={styles.whatsAppLink}

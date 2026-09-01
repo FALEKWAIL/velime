@@ -272,7 +272,7 @@ function CheckoutContent() {
             <h2 className={styles.emptyTitle}>Aucun article sélectionné</h2>
             <p className={styles.emptyDesc}>Choisissez un article dans notre collection pour finaliser votre commande.</p>
             <Link href="/boutique" className={styles.btnReturnShop}>
-              Découvrir la Boutique
+              Découvrir la Collection
             </Link>
           </div>
         </div>

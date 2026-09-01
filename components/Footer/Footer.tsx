@@ -25,7 +25,6 @@ export default function Footer() {
         {/* Logo & tagline */}
         <div className={styles.brand}>
           <div className={styles.logo}>
-            <span className={styles.logoSub}>Boutique</span>
             <span className={styles.logoMain}>Velime</span>
           </div>
           <p className={styles.tagline}>
@@ -39,7 +38,7 @@ export default function Footer() {
             <h3 className={styles.colTitle}>Navigation</h3>
             <ul className={styles.colList}>
               <li><Link href="/" className={styles.footLink}>Accueil</Link></li>
-              <li><Link href="/boutique" className={styles.footLink}>Boutique</Link></li>
+              <li><Link href="/boutique" className={styles.footLink}>Collection</Link></li>
               <li><Link href="/boutique?cat=Nouveau" className={styles.footLink}>Nouveautés</Link></li>
               <li><Link href="/panier" className={styles.footLink}>Panier</Link></li>
             </ul>
@@ -77,7 +76,7 @@ export default function Footer() {
       </div>
 
       <div className={styles.bottom}>
-        <p className={styles.copyright}>© {new Date().getFullYear()} Velime Boutique. Tous droits réservés.</p>
+        <p className={styles.copyright}>© {new Date().getFullYear()} Velime. Tous droits réservés.</p>
         <div className={styles.adminLinkWrapper}>
           <Link href="/admin" className={styles.adminFootLink} id="footer-admin-link">
             Accès Administration

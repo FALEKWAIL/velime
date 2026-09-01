@@ -9,12 +9,12 @@ import WhatsAppFAB from '@/components/WhatsAppFAB/WhatsAppFAB';
 import BackToTop from '@/components/BackToTop/BackToTop';
 
 export const metadata: Metadata = {
-  title: 'Velime Boutique — Mode Femme Élégante',
+  title: 'Velime — Mode Femme Élégante',
   description:
-    'Velime Boutique propose une sélection de vêtements femme tendance, élégants et soigneusement choisis pour accompagner chaque femme avec confiance.',
-  keywords: ['mode femme', 'boutique algérie', 'robes élégantes', 'vêtements', 'velime'],
+    'Velime propose une sélection de vêtements femme tendance, élégants et soigneusement choisis pour accompagner chaque femme avec confiance.',
+  keywords: ['mode femme', 'algérie', 'robes élégantes', 'vêtements', 'velime'],
   openGraph: {
-    title: 'Velime Boutique',
+    title: 'Velime',
     description: 'Une mode pensée pour accompagner chaque femme avec élégance et confiance.',
     type: 'website',
   },

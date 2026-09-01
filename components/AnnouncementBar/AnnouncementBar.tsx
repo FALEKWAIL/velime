@@ -5,7 +5,7 @@ import styles from './AnnouncementBar.module.css';
 const announcements = [
   { icon: '♥', text: 'Livraison disponible 58 wilayas' },
   { icon: '★', text: 'Paiement à la livraison sécurisé' },
-  { icon: '♥', text: 'Velime Boutique — Mode & Élégance' },
+  { icon: '♥', text: 'Velime — Mode & Élégance' },
   { icon: '★', text: 'Livraison rapide & soignée' },
   { icon: '♥', text: 'Qualité & Finitions Haut de Gamme' },
   { icon: '★', text: 'Service Client à votre écoute 7j/7' },
@@ -18,7 +18,7 @@ export default function AnnouncementBar() {
     return null;
   }
   return (
-    <div className={styles.bar} id="top-announcement-bar" role="region" aria-label="Annonces boutique">
+    <div className={styles.bar} id="top-announcement-bar" role="region" aria-label="Annonces Velime">
       <div className={styles.track}>
         <div className={styles.content}>
           {announcements.map((item, i) => (

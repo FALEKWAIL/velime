@@ -51,7 +51,7 @@ export default function MobileMenu({ open, onClose }: Props) {
           </li>
           <li>
             <Link href="/boutique" className={styles.navLink} onClick={onClose}>
-              Toute la Boutique
+              Toute la Collection
             </Link>
           </li>
           {categories.map((cat) => (
