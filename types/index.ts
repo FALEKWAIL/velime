@@ -54,7 +54,7 @@ export interface CartContextType {
   totalPrice: number;
 }
 
-export type OrderStatus = 'en_attente' | 'confirmee' | 'en_livraison' | 'livree' | 'annulee';
+export type OrderStatus = 'en_attente' | 'confirmee' | 'annulee';
 export type DeliveryType = 'domicile' | 'bureau';
 
 export interface OrderItem {

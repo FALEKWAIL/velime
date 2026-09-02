@@ -988,18 +988,18 @@ export default function AdminPage() {
                   <span className={styles.statSub}>À confirmer par téléphone</span>
                 </div>
                 <div className={`${styles.orderStatCard} ${styles.statDelivered}`}>
-                  <span className={styles.statLabel}>Livrées</span>
+                  <span className={styles.statLabel}>Confirmées</span>
                   <strong className={styles.statValue}>
-                    {orders.filter((o) => o.status === 'livree').length}
+                    {orders.filter((o) => o.status === 'confirmee').length}
                   </strong>
-                  <span className={styles.statSub}>Commandes abouties</span>
+                  <span className={styles.statSub}>Commandes validées</span>
                 </div>
                 <div className={styles.orderStatCard}>
                   <span className={styles.statLabel}>Chiffre d&apos;Affaires</span>
                   <strong className={styles.statValue}>
-                    {formatPrice(orders.filter((o) => o.status !== 'annulee').reduce((sum, o) => sum + o.totalAmount, 0))}
+                    {formatPrice(orders.filter((o) => o.status === 'confirmee').reduce((sum, o) => sum + o.totalAmount, 0))}
                   </strong>
-                  <span className={styles.statSub}>Hors annulations</span>
+                  <span className={styles.statSub}>Commandes confirmées</span>
                 </div>
               </div>
 
@@ -1027,8 +1027,6 @@ export default function AdminPage() {
                     { id: 'all', label: `Toutes (${orders.length})` },
                     { id: 'en_attente', label: `⏳ En attente (${orders.filter(o => o.status === 'en_attente').length})` },
                     { id: 'confirmee', label: `✅ Confirmées (${orders.filter(o => o.status === 'confirmee').length})` },
-                    { id: 'en_livraison', label: `🚚 En livraison (${orders.filter(o => o.status === 'en_livraison').length})` },
-                    { id: 'livree', label: `🎉 Livrées (${orders.filter(o => o.status === 'livree').length})` },
                     { id: 'annulee', label: `❌ Annulées (${orders.filter(o => o.status === 'annulee').length})` },
                   ].map((filter) => (
                     <button
@@ -1085,8 +1083,6 @@ export default function AdminPage() {
                             >
                               <option value="en_attente">⏳ En attente</option>
                               <option value="confirmee">✅ Confirmée</option>
-                              <option value="en_livraison">🚚 En livraison</option>
-                              <option value="livree">🎉 Livrée</option>
                               <option value="annulee">❌ Annulée</option>
                             </select>
                           </div>
