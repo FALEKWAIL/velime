@@ -28,7 +28,6 @@ export const defaultSiteData: SiteData = {
   heroSubtitle: 'Une allure , toujours',
   heroCtaText: 'Découvrir',
   heroImage: '/images/hero-custom.jpg',
-  // Start with empty arrays — real data comes from localStorage or Supabase
   products: [],
   categories: [],
   brands: [
@@ -46,41 +45,118 @@ export const defaultSiteData: SiteData = {
   ],
 };
 
+// ============================================================
+// SHARED REAL-TIME MODULE STATE & BROADCAST CHANNEL
+// Ensures 100% instant auto-sync across all components & tabs
+// ============================================================
+let memorySiteData: SiteData = defaultSiteData;
+let memoryLoaded = false;
+const subscribers = new Set<(d: SiteData) => void>();
+
+function notifyAll(newData: SiteData) {
+  memorySiteData = newData;
+  memoryLoaded = true;
+  subscribers.forEach((cb) => {
+    try {
+      cb(newData);
+    } catch {}
+  });
+}
+
+function parseStoredData(): SiteData | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+    const customHeroImg = localStorage.getItem(HERO_IMAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        ...defaultSiteData,
+        ...parsed,
+        heroImage: customHeroImg || parsed.heroImage || defaultSiteData.heroImage,
+        products: Array.isArray(parsed.products) ? parsed.products : [],
+        categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+        brands: parsed.brands && parsed.brands.length > 0 ? parsed.brands : defaultSiteData.brands,
+        lookbookPhotos:
+          parsed.lookbookPhotos && parsed.lookbookPhotos.length > 0
+            ? parsed.lookbookPhotos
+            : defaultSiteData.lookbookPhotos,
+      };
+    }
+  } catch {}
+  return null;
+}
+
 export function useSiteData() {
-  const [data, setData] = useState<SiteData>(defaultSiteData);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [data, setData] = useState<SiteData>(() => {
+    if (memoryLoaded) return memorySiteData;
+    const fromStorage = parseStoredData();
+    if (fromStorage) {
+      memorySiteData = fromStorage;
+      memoryLoaded = true;
+      return fromStorage;
+    }
+    return defaultSiteData;
+  });
+
+  const [isLoaded, setIsLoaded] = useState(memoryLoaded);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // 1. Load data from LocalStorage first (instant render)
-  const loadLocalData = useCallback(() => {
-    try {
-      const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
-      const customHeroImg = localStorage.getItem(HERO_IMAGE_KEY);
-
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setData({
-          ...defaultSiteData,
-          ...parsed,
-          heroImage: customHeroImg || parsed.heroImage || defaultSiteData.heroImage,
-          // Respect stored values directly — even empty arrays mean the admin cleared them
-          products: Array.isArray(parsed.products) ? parsed.products : [],
-          categories: Array.isArray(parsed.categories) ? parsed.categories : [],
-          brands: parsed.brands && parsed.brands.length > 0 ? parsed.brands : defaultSiteData.brands,
-          lookbookPhotos: parsed.lookbookPhotos && parsed.lookbookPhotos.length > 0 ? parsed.lookbookPhotos : defaultSiteData.lookbookPhotos,
-        });
-      } else if (customHeroImg) {
-        setData((prev) => ({ ...prev, heroImage: customHeroImg }));
-      }
-    } catch (err) {
-      console.error('Error loading local site data:', err);
-    } finally {
-      setIsLoaded(true);
-    }
+  // Subscribe this hook instance to shared live updates
+  useEffect(() => {
+    subscribers.add(setData);
+    return () => {
+      subscribers.delete(setData);
+    };
   }, []);
 
-  // 2. Fetch latest data from Supabase if configured
+  // 1. Initial LocalStorage load & BroadcastChannel listener
+  useEffect(() => {
+    const fromStorage = parseStoredData();
+    if (fromStorage) {
+      notifyAll(fromStorage);
+      setIsLoaded(true);
+    } else {
+      setIsLoaded(true);
+    }
+
+    // Cross-tab broadcast listener for instant sync
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('velime_sync_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'SYNC' && event.data?.payload) {
+            notifyAll(event.data.payload);
+          }
+        };
+      }
+    } catch {}
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === ADMIN_STORAGE_KEY || e.key === HERO_IMAGE_KEY) {
+        const fresh = parseStoredData();
+        if (fresh) notifyAll(fresh);
+      }
+    };
+
+    const handleCustomChange = () => {
+      const fresh = parseStoredData();
+      if (fresh) notifyAll(fresh);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('velime-data-updated', handleCustomChange);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('velime-data-updated', handleCustomChange);
+    };
+  }, []);
+
+  // 2. Fetch latest data from Supabase in background
   const loadSupabaseData = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       setIsSupabaseConnected(false);
@@ -94,37 +170,59 @@ export function useSiteData() {
         fetchSiteSettingsFromSupabase(),
       ]);
 
-      if (sbProducts || sbCategories || sbSettings) {
+      if (sbProducts !== null || sbCategories !== null || sbSettings !== null) {
         setIsSupabaseConnected(true);
-        setData((prev) => {
-          // Never overwrite custom local heroImage with default placeholder
-          const isSbHeroCustom = sbSettings?.heroImage && sbSettings.heroImage !== '/images/hero-fabric.jpg';
-          const isPrevDefault = !prev.heroImage || prev.heroImage === '/images/hero-fabric.jpg';
-          const resolvedHeroImg = (isSbHeroCustom ? sbSettings?.heroImage : (isPrevDefault ? (sbSettings?.heroImage || prev.heroImage) : prev.heroImage)) || defaultSiteData.heroImage;
 
-          const merged: SiteData = {
-            heroTitle: sbSettings?.heroTitle || prev.heroTitle,
-            heroSubtitle: sbSettings?.heroSubtitle || prev.heroSubtitle,
-            heroCtaText: sbSettings?.heroCtaText || prev.heroCtaText,
-            heroImage: resolvedHeroImg,
-            brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
-            lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
-            // Respect empty arrays from Supabase — they mean the admin cleared the data
-            categories: Array.isArray(sbCategories) ? sbCategories : prev.categories,
-            products: Array.isArray(sbProducts) ? sbProducts : prev.products,
-          };
+        const currentLocal = memorySiteData;
 
-          // Keep local storage fresh
-          try {
-            localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(merged));
-            if (resolvedHeroImg) {
-              localStorage.setItem(HERO_IMAGE_KEY, resolvedHeroImg);
-            }
-          } catch {}
-          return merged;
-        });
-      } else {
-        setIsSupabaseConnected(true);
+        // Merge: keep local items that haven't been pushed to Supabase yet
+        let mergedProducts = currentLocal.products;
+        if (Array.isArray(sbProducts)) {
+          if (sbProducts.length === 0 && currentLocal.products.length === 0) {
+            mergedProducts = [];
+          } else if (sbProducts.length > 0) {
+            const localOnly = currentLocal.products.filter(
+              (lp) => !sbProducts.some((sp) => sp.id === lp.id)
+            );
+            mergedProducts = [...sbProducts, ...localOnly];
+          }
+        }
+
+        let mergedCategories = currentLocal.categories;
+        if (Array.isArray(sbCategories)) {
+          if (sbCategories.length === 0 && currentLocal.categories.length === 0) {
+            mergedCategories = [];
+          } else if (sbCategories.length > 0) {
+            const localOnlyCats = currentLocal.categories.filter(
+              (lc) => !sbCategories.some((sc) => sc.id === lc.id)
+            );
+            mergedCategories = [...sbCategories, ...localOnlyCats];
+          }
+        }
+
+        const isSbHeroCustom = sbSettings?.heroImage && sbSettings.heroImage !== '/images/hero-fabric.jpg';
+        const isPrevDefault = !currentLocal.heroImage || currentLocal.heroImage === '/images/hero-fabric.jpg';
+        const resolvedHeroImg = (isSbHeroCustom ? sbSettings?.heroImage : (isPrevDefault ? (sbSettings?.heroImage || currentLocal.heroImage) : currentLocal.heroImage)) || defaultSiteData.heroImage;
+
+        const merged: SiteData = {
+          heroTitle: sbSettings?.heroTitle || currentLocal.heroTitle,
+          heroSubtitle: sbSettings?.heroSubtitle || currentLocal.heroSubtitle,
+          heroCtaText: sbSettings?.heroCtaText || currentLocal.heroCtaText,
+          heroImage: resolvedHeroImg,
+          brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : currentLocal.brands,
+          lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : currentLocal.lookbookPhotos,
+          categories: mergedCategories,
+          products: mergedProducts,
+        };
+
+        try {
+          localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(merged));
+          if (resolvedHeroImg) {
+            localStorage.setItem(HERO_IMAGE_KEY, resolvedHeroImg);
+          }
+        } catch {}
+
+        notifyAll(merged);
       }
     } catch (err) {
       console.warn('Supabase fetch error, fallback to local data:', err);
@@ -136,31 +234,15 @@ export function useSiteData() {
   }, []);
 
   useEffect(() => {
-    loadLocalData();
     loadSupabaseData();
+  }, [loadSupabaseData]);
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === ADMIN_STORAGE_KEY || e.key === HERO_IMAGE_KEY) {
-        loadLocalData();
-      }
-    };
-
-    const handleCustomChange = () => {
-      loadLocalData();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('velime-data-updated', handleCustomChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('velime-data-updated', handleCustomChange);
-    };
-  }, [loadLocalData, loadSupabaseData]);
-
-  // Save to both LocalStorage and Supabase
+  // Save to both LocalStorage, shared state, broadcast to all tabs, and push to Supabase
   const saveData = useCallback((newData: SiteData) => {
-    setData(newData);
+    // 1. Instantly update all subscribers on page in 0ms
+    notifyAll(newData);
+
+    // 2. Save to LocalStorage
     try {
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(newData));
       if (newData.heroImage) {
@@ -169,9 +251,19 @@ export function useSiteData() {
     } catch (err) {
       console.error('LocalStorage write error:', err);
     }
+
+    // 3. Broadcast to all other tabs instantly
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('velime_sync_channel');
+        bc.postMessage({ type: 'SYNC', payload: newData });
+        bc.close();
+      }
+    } catch {}
+
     window.dispatchEvent(new Event('velime-data-updated'));
 
-    // Asynchronously push to Supabase if configured
+    // 4. Asynchronously push to Supabase in background
     if (isSupabaseConfigured()) {
       syncAllToSupabase(newData)
         .then((res) => {

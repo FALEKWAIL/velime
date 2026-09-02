@@ -45,6 +45,8 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
   const bestSellers = allProducts.filter((p) => p.isBestSeller);
   const displayProducts = bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 8);
 
+  if (displayProducts.length === 0) return null;
+
   const totalPages = Math.max(1, Math.ceil(displayProducts.length / itemsPerPage));
 
   useEffect(() => {

@@ -306,8 +306,12 @@ export const products: Product[] = [
 
 export const categories = ['Toutes', ...defaultCategories.map(c => c.name)];
 
-export const formatPrice = (price: number): string => {
-  return price.toLocaleString('de-DE') + ',00 د.ج';
+export const formatPrice = (price: any): string => {
+  const num = Number(price);
+  if (isNaN(num) || price === null || price === undefined) {
+    return '0,00 د.ج';
+  }
+  return num.toLocaleString('de-DE') + ',00 د.ج';
 };
 
 export const getBestSellers = (): Product[] =>
