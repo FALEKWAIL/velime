@@ -9,10 +9,15 @@ import styles from './Header.module.css';
 export default function Header() {
   const pathname = usePathname();
   const { totalItems } = useCart();
+  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -62,7 +67,7 @@ export default function Header() {
             </button>
             <Link href="/panier" id="cart-link" className={styles.cartBtn} aria-label="Panier">
               <CartIcon />
-              {totalItems > 0 && (
+              {mounted && totalItems > 0 && (
                 <span className={styles.cartBadge}>{totalItems}</span>
               )}
             </Link>

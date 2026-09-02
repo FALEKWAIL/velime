@@ -932,10 +932,10 @@ ${itemsText}
         </nav>
 
         <div className={styles.sidebarBottom}>
-          <Link href="/" className={styles.viewSite}>
+          <a href="/" className={styles.viewSite}>
             <span>🌐 Voir le site</span>
             <ExternalLinkIcon />
-          </Link>
+          </a>
           <button onClick={handleResetDefaults} className={styles.resetBtn}>
             <ResetIcon />
             <span>Réinitialiser</span>
@@ -987,9 +987,9 @@ ${itemsText}
             >
               Lookbook ({lookbookList.length})
             </button>
-            <Link href="/" className={`${styles.mobileTabChip} ${styles.mobileSwitchSiteChip}`}>
+            <a href="/" className={`${styles.mobileTabChip} ${styles.mobileSwitchSiteChip}`}>
               🌐 Voir le site
-            </Link>
+            </a>
             <button
               type="button"
               onClick={handleLogout}
@@ -1021,9 +1021,9 @@ ${itemsText}
 
           <div className={styles.topActions}>
             {savedMsg && <span className={styles.savedMsg}>{savedMsg}</span>}
-            <Link href="/" className={styles.switchSiteBtn} id="admin-switch-to-site-btn">
+            <a href="/" className={styles.switchSiteBtn} id="admin-switch-to-site-btn">
               <span>🌐 Voir le site</span>
-            </Link>
+            </a>
             <button
               type="button"
               onClick={handleLogout}
