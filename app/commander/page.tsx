@@ -54,7 +54,13 @@ function CheckoutContent() {
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
   const currentWilaya = getWilayaByCode(selectedWilayaCode) || WILAYAS_ALGERIA[15];
-  const deliveryFee = deliveryType === 'domicile' ? currentWilaya.homePrice : currentWilaya.deskPrice;
+  const deliveryFee = deliveryType === 'domicile' || currentWilaya.deskPrice === 0 ? currentWilaya.homePrice : currentWilaya.deskPrice;
+
+  useEffect(() => {
+    if (currentWilaya.deskPrice === 0 && deliveryType === 'bureau') {
+      setDeliveryType('domicile');
+    }
+  }, [currentWilaya, deliveryType]);
 
   // Calculate Subtotal and Total
   const subtotal = useMemo(() => {
@@ -573,23 +579,31 @@ function CheckoutContent() {
 
                 <label
                   className={`${styles.deliveryOptionCard} ${deliveryType === 'bureau' ? styles.deliveryOptionActive : ''}`}
+                  style={currentWilaya.deskPrice === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
                 >
                   <input
                     type="radio"
                     name={`delivMode-${formId}`}
                     value="bureau"
-                    checked={deliveryType === 'bureau'}
-                    onChange={() => setDeliveryType('bureau')}
+                    disabled={currentWilaya.deskPrice === 0}
+                    checked={deliveryType === 'bureau' && currentWilaya.deskPrice > 0}
+                    onChange={() => {
+                      if (currentWilaya.deskPrice > 0) setDeliveryType('bureau');
+                    }}
                     className={styles.hiddenRadio}
                   />
                   <div className={styles.delivHeader}>
                     <span className={styles.delivIconBadge}>🏢</span>
                     <div>
                       <strong className={styles.delivOptionName}>Bureau / Stop-Desk</strong>
-                      <span className={styles.delivOptionSub}>Récupération en agence</span>
+                      <span className={styles.delivOptionSub}>
+                        {currentWilaya.deskPrice === 0 ? 'Indisponible dans cette wilaya' : 'Récupération en agence'}
+                      </span>
                     </div>
                   </div>
-                  <div className={styles.delivFeeAmount}>{formatPrice(currentWilaya.deskPrice)}</div>
+                  <div className={styles.delivFeeAmount}>
+                    {currentWilaya.deskPrice > 0 ? formatPrice(currentWilaya.deskPrice) : 'Indisponible'}
+                  </div>
                 </label>
               </div>
             </div>

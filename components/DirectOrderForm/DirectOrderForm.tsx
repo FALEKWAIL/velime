@@ -1,5 +1,5 @@
 'use client';
-import { useState, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import Link from 'next/link';
 import { Product, DeliveryType, Order } from '@/types';
 import { WILAYAS_ALGERIA, getWilayaByCode } from '@/lib/wilayas';
@@ -49,9 +49,15 @@ export default function DirectOrderForm({
 
   const productColors = product.colors && product.colors.length > 0 ? product.colors : [];
   const currentWilaya = getWilayaByCode(selectedWilayaCode) || WILAYAS_ALGERIA[15]; // Alger fallback
-  const deliveryFee = deliveryType === 'domicile' ? currentWilaya.homePrice : currentWilaya.deskPrice;
+  const deliveryFee = deliveryType === 'domicile' || currentWilaya.deskPrice === 0 ? currentWilaya.homePrice : currentWilaya.deskPrice;
   const itemsSubtotal = product.price * qty;
   const totalAmount = itemsSubtotal + deliveryFee;
+
+  useEffect(() => {
+    if (currentWilaya.deskPrice === 0 && deliveryType === 'bureau') {
+      setDeliveryType('domicile');
+    }
+  }, [currentWilaya, deliveryType]);
 
   const handleColorSelect = (newColor: string) => {
     setColor(newColor);
@@ -394,20 +400,26 @@ export default function DirectOrderForm({
 
             <label
               className={`${styles.deliveryTypeCard} ${deliveryType === 'bureau' ? styles.deliveryActive : ''}`}
+              style={currentWilaya.deskPrice === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
             >
               <input
                 type="radio"
                 name={`deliveryType-${formId}`}
                 value="bureau"
-                checked={deliveryType === 'bureau'}
-                onChange={() => setDeliveryType('bureau')}
+                disabled={currentWilaya.deskPrice === 0}
+                checked={deliveryType === 'bureau' && currentWilaya.deskPrice > 0}
+                onChange={() => {
+                  if (currentWilaya.deskPrice > 0) setDeliveryType('bureau');
+                }}
                 className={styles.radioHidden}
               />
               <div className={styles.deliveryCardHeader}>
                 <span className={styles.deliveryIcon}>🏢</span>
                 <strong className={styles.deliveryTitle}>Au Bureau (Stop-Desk)</strong>
               </div>
-              <span className={styles.deliveryFeeText}>{formatPrice(currentWilaya.deskPrice)}</span>
+              <span className={styles.deliveryFeeText}>
+                {currentWilaya.deskPrice > 0 ? formatPrice(currentWilaya.deskPrice) : 'Indisponible'}
+              </span>
             </label>
           </div>
         </div>
