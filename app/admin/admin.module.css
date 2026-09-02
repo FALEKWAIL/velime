@@ -1706,24 +1706,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background-color: #f7f4ee;
-  border: 1px dashed #b5a995;
-  color: #2b221a;
+  gap: 0.6rem;
+  padding: 0.85rem 1.4rem;
+  background-color: #F8F5F0;
+  border: 1.5px dashed #B8A996;
+  color: #3B2C20;
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   width: fit-content;
 }
 
 .directUploadBtn:hover {
-  background-color: #4e4034;
-  color: #ffffff;
-  border-color: #4e4034;
+  background-color: #3B2C20;
+  color: #FFFFFF;
+  border-color: #3B2C20;
+  transform: translateY(-1px);
 }
 
 .urlInputRow {

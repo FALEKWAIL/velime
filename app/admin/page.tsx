@@ -2039,26 +2039,6 @@ ${itemsText}
                   </label>
                 </div>
 
-                {/* Add by URL */}
-                <div className={styles.addImageRow}>
-                  <div className={styles.urlInputRow}>
-                    <input
-                      type="text"
-                      placeholder="Ou coller une URL d'image (ex: /images/p1.jpg ou https://...)"
-                      value={newLookbookUrl}
-                      onChange={(e) => setNewLookbookUrl(e.target.value)}
-                      className={styles.formInput}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddLookbookUrl}
-                      className={styles.addImageBtn}
-                    >
-                      + Ajouter URL
-                    </button>
-                  </div>
-                </div>
-
                 {/* Grid of current Lookbook photos */}
                 <div className={styles.lookbookGrid}>
                   {lookbookList.map((photoSrc, idx) => (
@@ -2772,25 +2752,8 @@ ${itemsText}
                       style={{ display: 'none' }}
                     />
                     <UploadIcon />
-                    <span>📁 Télécharger des photos</span>
+                    <span>📁 Télécharger des photos depuis l&apos;appareil (Téléphone / Ordinateur)</span>
                   </label>
-
-                  <div className={styles.urlInputRow}>
-                    <input
-                      type="text"
-                      placeholder="Ou URL de la photo..."
-                      value={prodForm.newImageUrl}
-                      onChange={(e) => setProdForm(f => ({ ...f, newImageUrl: e.target.value }))}
-                      className={styles.formInput}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddImageToGallery}
-                      className={styles.addImageBtn}
-                    >
-                      + Ajouter URL
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -2889,14 +2852,8 @@ ${itemsText}
                       style={{ display: 'none' }}
                     />
                     <UploadIcon />
-                    <span>📁 Télécharger une photo</span>
+                    <span>📁 Télécharger une photo depuis l&apos;appareil</span>
                   </label>
-                  <input
-                    className={styles.formInput}
-                    value={catForm.image}
-                    onChange={(e) => setCatForm(f => ({ ...f, image: e.target.value }))}
-                    placeholder="/images/p1.jpg ou URL..."
-                  />
                 </div>
               </div>
 
