@@ -4,10 +4,8 @@ import styles from './AnnouncementBar.module.css';
 
 const announcements = [
   { icon: '♥', text: 'Livraison disponible 58 wilayas' },
-  { icon: '★', text: 'Paiement à la livraison sécurisé' },
-  { icon: '💬', text: 'WhatsApp : 0551 01 58 86' },
+  { icon: '★', text: 'Paiement à la livraison' },
   { icon: '★', text: 'Livraison rapide & soignée' },
-  { icon: '📸', text: 'Instagram : @velime.co' },
   { icon: '♥', text: 'Qualité & Finitions Haut de Gamme' },
   { icon: '★', text: 'Service Client à votre écoute 7j/7' },
 ];

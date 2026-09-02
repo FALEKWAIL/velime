@@ -98,6 +98,34 @@
   color: var(--natural-stone);
 }
 
+.contactIcons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.instaIconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1px solid #D8CEBE;
+  color: var(--deep-mocha);
+  transition: all 0.2s ease;
+}
+
+.instaIconLink:hover {
+  background-color: var(--deep-mocha);
+  color: #FFFFFF;
+  border-color: var(--deep-mocha);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
 /* Bottom bar */
 .bottom {
   border-top: 1px solid var(--border-color);
