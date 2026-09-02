@@ -59,6 +59,7 @@ export type DeliveryType = 'domicile' | 'bureau';
 
 export interface OrderItem {
   productId: string;
+  productSlug?: string;
   productName: string;
   productImage: string;
   price: number;

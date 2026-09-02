@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Product, Category, StockStatus, StockVariant } from '@/types';
+import { Product, Category, StockStatus, StockVariant, Order, OrderItem, OrderStatus } from '@/types';
 import { useSiteData, defaultSiteData, HERO_IMAGE_KEY } from '@/hooks/useSiteData';
 import {
   formatPrice,
@@ -10,7 +10,6 @@ import {
   computeStockStatusFromMatrix,
 } from '@/data/products';
 import { useOrders } from '@/hooks/useOrders';
-import { OrderStatus } from '@/types';
 import styles from './admin.module.css';
 
 const ADMIN_PASSWORD = 'velime2024';
@@ -43,6 +42,35 @@ export default function AdminPage() {
   // Orders management filters & search
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
+  const [inspectingOrder, setInspectingOrder] = useState<Order | null>(null);
+  const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
+  const [copiedBordereau, setCopiedBordereau] = useState(false);
+
+  const handleCopyBordereau = (ord: Order) => {
+    const itemsText = ord.items
+      .map(
+        (it: OrderItem) =>
+          `• ${it.productName} | Taille : ${it.size}${it.color ? ` | Couleur : ${it.color}` : ''} | Qté : ${it.quantity} (${formatPrice(it.price * it.quantity)})`
+      )
+      .join('\n');
+
+    const text = `📦 COMMANDE #${ord.orderNumber}
+👤 Client : ${ord.customerName}
+📞 Téléphone : ${ord.customerPhone}
+📍 Destination : ${ord.wilayaName} (${ord.wilayaCode}) — ${ord.commune}
+🚚 Mode : ${ord.deliveryType === 'domicile' ? 'À Domicile (main propre)' : 'Bureau / Stop-Desk'}
+${ord.notes ? `📝 Remarques : ${ord.notes}\n` : ''}👗 Article(s) commandé(s) :
+${itemsText}
+💰 Frais de livraison : ${formatPrice(ord.deliveryCost)}
+💵 TOTAL À ENCAISSER : ${formatPrice(ord.totalAmount)}`;
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedBordereau(true);
+      showNotification('Bordereau copié pour le livreur !');
+      setTimeout(() => setCopiedBordereau(false), 2500);
+    }
+  };
 
   // Modal states for Product
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -1121,7 +1149,12 @@ export default function AdminPage() {
                         {/* Items in this Order */}
                         <div className={styles.orderItemsList}>
                           {ord.items.map((item, idx) => (
-                            <div key={idx} className={styles.orderItemRow}>
+                            <div
+                              key={idx}
+                              className={styles.orderItemRow}
+                              onClick={() => setInspectingOrder(ord)}
+                              title="Cliquer pour voir l'article exactement en grand format"
+                            >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={item.productImage}
@@ -1129,7 +1162,10 @@ export default function AdminPage() {
                                 className={styles.orderItemThumb}
                               />
                               <div className={styles.orderItemDetails}>
-                                <span className={styles.orderItemTitle}>{item.productName}</span>
+                                <div className={styles.orderItemTitleRow}>
+                                  <span className={styles.orderItemTitle}>{item.productName}</span>
+                                  <span className={styles.inspectBadge}>👁️ Voir l&apos;article</span>
+                                </div>
                                 <span className={styles.orderItemMeta}>
                                   Taille : <strong>{item.size}</strong> {item.color ? `• Couleur : ${item.color}` : ''} • Qté : <strong>{item.quantity}</strong>
                                 </span>
@@ -1151,6 +1187,21 @@ export default function AdminPage() {
                           <div className={styles.orderCardActions}>
                             <button
                               type="button"
+                              onClick={() => setInspectingOrder(ord)}
+                              className={styles.inspectOrderActionBtn}
+                            >
+                              👁️ Voir l&apos;article & Détails
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyBordereau(ord)}
+                              className={styles.copyBordereauBtn}
+                              title="Copier les coordonnées pour le livreur"
+                            >
+                              📋 Copier
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => {
                                 if (confirm(`Supprimer définitivement la commande #${ord.orderNumber} ?`)) {
                                   removeOrder(ord.id);
@@ -1166,6 +1217,295 @@ export default function AdminPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* ============================================================
+                  MODAL: INSPECT ORDER & EXACT ARTICLE DETAILS
+                 ============================================================ */}
+              {inspectingOrder && (
+                <div
+                  className={styles.inspectorOverlay}
+                  onClick={() => setInspectingOrder(null)}
+                >
+                  <div
+                    className={styles.inspectorModal}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className={styles.inspectorHeader}>
+                      <div className={styles.inspectorHeaderLeft}>
+                        <span className={styles.inspectorOrderNum}>Commande #{inspectingOrder.orderNumber}</span>
+                        <span className={styles.inspectorDate}>
+                          {new Date(inspectingOrder.createdAt).toLocaleDateString('fr-DZ', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className={styles.inspectorHeaderRight}>
+                        <select
+                          value={inspectingOrder.status}
+                          onChange={(e) => {
+                            const newStatus = e.target.value as OrderStatus;
+                            updateStatus(inspectingOrder.id, newStatus);
+                            setInspectingOrder({ ...inspectingOrder, status: newStatus });
+                            showNotification(`Statut #${inspectingOrder.orderNumber} : ${newStatus}`);
+                          }}
+                          className={`${styles.statusSelect} ${styles[`status_${inspectingOrder.status}`]}`}
+                        >
+                          <option value="en_attente">⏳ En attente</option>
+                          <option value="confirmee">✅ Confirmée</option>
+                          <option value="annulee">❌ Annulée</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setInspectingOrder(null)}
+                          className={styles.modalCloseBtn}
+                          aria-label="Fermer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Modal Content */}
+                    <div className={styles.inspectorBody}>
+                      {/* 1. ARTICLES COMMANDÉS */}
+                      <div className={styles.inspectorSection}>
+                        <h3 className={styles.inspectorSectionTitle}>
+                          👗 Article{inspectingOrder.items.length > 1 ? 's' : ''} commandé{inspectingOrder.items.length > 1 ? 's' : ''} ({inspectingOrder.items.length})
+                        </h3>
+
+                        <div className={styles.inspectorArticlesList}>
+                          {inspectingOrder.items.map((item: OrderItem, idx: number) => {
+                            const matchedProduct = products.find(
+                              (p) =>
+                                p.id === item.productId ||
+                                (item.productSlug && p.slug === item.productSlug) ||
+                                p.name.toLowerCase() === item.productName.toLowerCase()
+                            );
+                            const productUrl = matchedProduct?.slug
+                              ? `/produit/${matchedProduct.slug}`
+                              : (item.productSlug ? `/produit/${item.productSlug}` : `/boutique`);
+
+                            return (
+                              <div key={idx} className={styles.inspectorArticleCard}>
+                                <div
+                                  className={styles.inspectorImgCol}
+                                  onClick={() => setPreviewImageModal(item.productImage)}
+                                  title="Cliquer pour voir la photo en grand format"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={item.productImage}
+                                    alt={item.productName}
+                                    className={styles.inspectorBigImg}
+                                  />
+                                  <span className={styles.zoomHoverBadge}>🔍 Agrandir</span>
+                                </div>
+
+                                <div className={styles.inspectorArticleDetails}>
+                                  <div className={styles.artHeadRow}>
+                                    <div>
+                                      <h4 className={styles.inspectorArtName}>{item.productName}</h4>
+                                      {matchedProduct?.category && (
+                                        <span className={styles.artCategoryBadge}>{matchedProduct.category}</span>
+                                      )}
+                                    </div>
+                                    <span className={styles.inspectorArtPrice}>
+                                      {formatPrice(item.price * item.quantity)}
+                                    </span>
+                                  </div>
+
+                                  {/* Ordered Attributes */}
+                                  <div className={styles.inspectorAttributesGrid}>
+                                    <div className={styles.attributeItem}>
+                                      <span className={styles.attributeLabel}>Taille :</span>
+                                      <span className={styles.attributeValueHighlight}>{item.size}</span>
+                                    </div>
+
+                                    <div className={styles.attributeItem}>
+                                      <span className={styles.attributeLabel}>Couleur :</span>
+                                      <div className={styles.attributeColorVal}>
+                                        {item.color && (
+                                          <span
+                                            className={styles.attrColorDot}
+                                            style={{ backgroundColor: getColorHex(item.color) }}
+                                          />
+                                        )}
+                                        <span>{item.color || 'Standard'}</span>
+                                      </div>
+                                    </div>
+
+                                    <div className={styles.attributeItem}>
+                                      <span className={styles.attributeLabel}>Quantité :</span>
+                                      <span className={styles.attributeValueHighlight}>{item.quantity}</span>
+                                    </div>
+
+                                    <div className={styles.attributeItem}>
+                                      <span className={styles.attributeLabel}>Prix unitaire :</span>
+                                      <span>{formatPrice(item.price)}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Direct Live Link Button */}
+                                  <div className={styles.artActionRow}>
+                                    <a
+                                      href={productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={styles.btnOpenProductPage}
+                                    >
+                                      🔗 Voir la fiche de cet article sur le site ↗
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. CLIENT & DESTINATION */}
+                      <div className={styles.inspectorSection}>
+                        <h3 className={styles.inspectorSectionTitle}>👤 Coordonnées du Client & Livraison</h3>
+                        <div className={styles.inspectorClientGrid}>
+                          <div className={styles.clientDetailBlock}>
+                            <span className={styles.clientBlockLabel}>Nom du Client :</span>
+                            <strong className={styles.clientNameText}>{inspectingOrder.customerName}</strong>
+                          </div>
+
+                          <div className={styles.clientDetailBlock}>
+                            <span className={styles.clientBlockLabel}>Numéro de Téléphone :</span>
+                            <div className={styles.clientPhoneActions}>
+                              <a href={`tel:${inspectingOrder.customerPhone}`} className={styles.modalPhoneCallBtn}>
+                                📞 {inspectingOrder.customerPhone}
+                              </a>
+                              <a
+                                href={`https://wa.me/213${inspectingOrder.customerPhone.replace(/^0/, '')}?text=Bonjour%20${encodeURIComponent(inspectingOrder.customerName)},%20je%20vous%20contacte%20concernant%20votre%20commande%20${inspectingOrder.orderNumber}%20sur%20Velime.`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.modalWhatsAppBtn}
+                              >
+                                💬 WhatsApp
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className={styles.clientDetailBlock}>
+                            <span className={styles.clientBlockLabel}>Destination :</span>
+                            <span className={styles.clientDestText}>
+                              📍 <strong>{inspectingOrder.wilayaName} ({inspectingOrder.wilayaCode})</strong> — {inspectingOrder.commune}
+                            </span>
+                          </div>
+
+                          <div className={styles.clientDetailBlock}>
+                            <span className={styles.clientBlockLabel}>Mode d&apos;expédition :</span>
+                            <span className={styles.clientDeliveryModeBadge}>
+                              {inspectingOrder.deliveryType === 'domicile' ? '🏠 À Domicile (remise en main propre)' : '🏢 Bureau / Stop-Desk (retrait en agence)'}
+                            </span>
+                          </div>
+
+                          {inspectingOrder.notes && (
+                            <div className={`${styles.clientDetailBlock} ${styles.clientNotesFull}`}>
+                              <span className={styles.clientBlockLabel}>Remarques / Adresse détaillée :</span>
+                              <p className={styles.clientNotesText}>{inspectingOrder.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 3. TOTAL FINANCIER */}
+                      <div className={styles.inspectorSection}>
+                        <h3 className={styles.inspectorSectionTitle}>💵 Détail Financier à Encaisser</h3>
+                        <div className={styles.inspectorFinancialBox}>
+                          <div className={styles.finRow}>
+                            <span>Sous-total articles :</span>
+                            <span>{formatPrice(inspectingOrder.itemsSubtotal)}</span>
+                          </div>
+                          <div className={styles.finRow}>
+                            <span>Frais de livraison ({inspectingOrder.wilayaName}) :</span>
+                            <span>{formatPrice(inspectingOrder.deliveryCost)}</span>
+                          </div>
+                          <div className={styles.finTotalRow}>
+                            <div>
+                              <strong>TOTAL À ENCAISSER</strong>
+                              <span className={styles.finSub}>Paiement à la livraison</span>
+                            </div>
+                            <span className={styles.finTotalValue}>
+                              {formatPrice(inspectingOrder.totalAmount)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Modal Footer Actions */}
+                    <div className={styles.inspectorFooter}>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyBordereau(inspectingOrder)}
+                        className={styles.btnCopyBordereauModal}
+                      >
+                        {copiedBordereau ? '✅ Bordereau Copié !' : '📋 Copier la fiche pour le livreur'}
+                      </button>
+
+                      <div className={styles.inspectorFooterRight}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Supprimer définitivement la commande #${inspectingOrder.orderNumber} ?`)) {
+                              removeOrder(inspectingOrder.id);
+                              setInspectingOrder(null);
+                              showNotification(`Commande supprimée.`);
+                            }
+                          }}
+                          className={styles.btnDeleteOrderModal}
+                        >
+                          🗑️ Supprimer
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInspectingOrder(null)}
+                          className={styles.btnCloseModalPrimary}
+                        >
+                          Fermer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ============================================================
+                  LIGHTBOX: IMAGE ZOOM MODAL
+                 ============================================================ */}
+              {previewImageModal && (
+                <div
+                  className={styles.lightboxOverlay}
+                  onClick={() => setPreviewImageModal(null)}
+                  title="Cliquer n'importe où pour fermer"
+                >
+                  <div className={styles.lightboxContainer} onClick={(e) => e.stopPropagation()}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={previewImageModal}
+                      alt="Article Velime agrandi"
+                      className={styles.lightboxImg}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImageModal(null)}
+                      className={styles.lightboxCloseBtn}
+                    >
+                      ✕ Fermer
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

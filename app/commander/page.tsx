@@ -139,6 +139,7 @@ function CheckoutContent() {
         orderItems = [
           {
             productId: singleProduct.id,
+            productSlug: singleProduct.slug,
             productName: singleProduct.name,
             productImage: singleProduct.image || (singleProduct.images && singleProduct.images[0]) || '/images/p1.jpg',
             price: singleProduct.price,
@@ -150,6 +151,7 @@ function CheckoutContent() {
       } else {
         orderItems = cartItems.map((it) => ({
           productId: it.product.id,
+          productSlug: it.product.slug,
           productName: it.product.name,
           productImage: it.product.image || (it.product.images && it.product.images[0]) || '/images/p1.jpg',
           price: it.product.price,

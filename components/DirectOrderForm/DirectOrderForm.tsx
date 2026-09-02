@@ -135,6 +135,7 @@ export default function DirectOrderForm({
         items: [
           {
             productId: product.id,
+            productSlug: product.slug,
             productName: product.name,
             productImage: product.image || (product.images && product.images[0]) || '/images/p1.jpg',
             price: product.price,
