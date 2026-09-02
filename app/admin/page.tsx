@@ -73,6 +73,93 @@ ${itemsText}
     }
   };
 
+  // Dedicated Stock Management Modal
+  const [stockModalProduct, setStockModalProduct] = useState<Product | null>(null);
+  const [quickStockStatus, setQuickStockStatus] = useState<StockStatus>('in_stock');
+  const [quickStockMatrix, setQuickStockMatrix] = useState<StockVariant[]>([]);
+
+  const openStockModal = (p: Product) => {
+    setStockModalProduct(p);
+    const initialSizes = p.sizes || ['S', 'M', 'L'];
+    const initialColors = p.colors && p.colors.length > 0 ? p.colors : ['Standard'];
+    const initialMatrix =
+      p.stockMatrix && p.stockMatrix.length > 0
+        ? p.stockMatrix
+        : generateDefaultStockMatrix(initialSizes, initialColors, p.stockStatus !== 'total_out');
+    setQuickStockStatus(p.stockStatus || (p.inStock ? 'in_stock' : 'total_out'));
+    setQuickStockMatrix(initialMatrix);
+  };
+
+  const toggleQuickMatrixCell = (size: string, color: string) => {
+    setQuickStockMatrix((prev) =>
+      prev.map((item) => {
+        if (item.size === size && (item.color || 'Standard') === color) {
+          return { ...item, inStock: !item.inStock };
+        }
+        return item;
+      })
+    );
+  };
+
+  const setAllQuickMatrixStock = (val: boolean) => {
+    setQuickStockMatrix((prev) => prev.map((m) => ({ ...m, inStock: val })));
+  };
+
+  const toggleQuickSizeColumn = (sz: string, val: boolean) => {
+    setQuickStockMatrix((prev) =>
+      prev.map((item) => (item.size === sz ? { ...item, inStock: val } : item))
+    );
+  };
+
+  const handleSaveQuickStock = () => {
+    if (!stockModalProduct) return;
+    const computedStatus =
+      quickStockStatus === 'partial_out'
+        ? computeStockStatusFromMatrix(quickStockMatrix)
+        : quickStockStatus;
+    const isInStock = computedStatus !== 'total_out';
+
+    const updated = products.map((p) => {
+      if (p.id !== stockModalProduct.id) return p;
+      return {
+        ...p,
+        stockStatus: computedStatus,
+        inStock: isInStock,
+        stockMatrix: quickStockMatrix,
+        badge:
+          computedStatus === 'total_out'
+            ? 'Rupture de Stock'
+            : computedStatus === 'partial_out'
+            ? 'Stock Limité'
+            : p.badge === 'Rupture de Stock' || p.badge === 'Stock Limité'
+            ? undefined
+            : p.badge,
+      };
+    });
+
+    saveData({
+      heroTitle,
+      heroSubtitle,
+      heroCtaText,
+      heroImage,
+      categories,
+      products: updated,
+      brands,
+      lookbookPhotos: lookbookList,
+    });
+
+    showNotification(
+      `Disponibilité de « ${stockModalProduct.name} » mise à jour (${
+        computedStatus === 'in_stock'
+          ? 'En Stock'
+          : computedStatus === 'partial_out'
+          ? 'Rupture Partielle'
+          : 'Rupture Totale'
+      }).`
+    );
+    setStockModalProduct(null);
+  };
+
   // Modal states for Product
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -1659,7 +1746,7 @@ ${itemsText}
                           </div>
                         </div>
 
-                        {/* Stock status */}
+                        {/* Stock status - Opens dedicated Stock Management Modal */}
                         <div>
                           <button
                             type="button"
@@ -1670,8 +1757,8 @@ ${itemsText}
                                 ? styles.statusPartialOut
                                 : styles.statusTotalOut
                             }`}
-                            onClick={() => handleToggleStockQuick(p.id, status)}
-                            title="Cliquez pour changer d'état"
+                            onClick={() => openStockModal(p)}
+                            title="Gérer le stock et les disponibilités de cet article"
                           >
                             <span className={styles.statusDot} />
                             <span>
@@ -1679,6 +1766,7 @@ ${itemsText}
                               {status === 'partial_out' && 'Rupture Partielle'}
                               {status === 'total_out' && 'Rupture Totale'}
                             </span>
+                            <span className={styles.stockManageIcon}>⚙️</span>
                           </button>
                         </div>
 
@@ -2000,6 +2088,252 @@ ${itemsText}
           )}
         </div>
       </main>
+
+      {/* ============================================================
+          MODAL: DEDICATED QUICK STOCK MANAGEMENT
+         ============================================================ */}
+      {stockModalProduct && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setStockModalProduct(null)}
+        >
+          <div
+            className={styles.stockModalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={styles.stockModalHeader}>
+              <div className={styles.stockModalProdHeader}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={stockModalProduct.image || (stockModalProduct.images && stockModalProduct.images[0]) || '/images/p1.jpg'}
+                  alt={stockModalProduct.name}
+                  className={styles.stockModalThumb}
+                />
+                <div>
+                  <span className={styles.stockModalTag}>Gestion du Stock</span>
+                  <h3 className={styles.stockModalTitle}>{stockModalProduct.name}</h3>
+                  <span className={styles.stockModalPrice}>
+                    {formatPrice(stockModalProduct.price)} • {stockModalProduct.category}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStockModalProduct(null)}
+                className={styles.modalCloseBtn}
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className={styles.stockModalBody}>
+              {/* Radio Options */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Choisir la disponibilité de cet article :</label>
+                <div className={styles.stockRadioGroup}>
+                  <label
+                    className={`${styles.radioLabel} ${
+                      quickStockStatus === 'in_stock' ? styles.radioSelected : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="quickStockStatus"
+                      value="in_stock"
+                      checked={quickStockStatus === 'in_stock'}
+                      onChange={() => {
+                        setQuickStockStatus('in_stock');
+                        setQuickStockMatrix((prev) => prev.map((m) => ({ ...m, inStock: true })));
+                      }}
+                    />
+                    <div>
+                      <strong className={styles.stockGreenText}>🟢 En Stock (Total)</strong>
+                      <p className={styles.stockSubText}>
+                        Toutes les tailles ({stockModalProduct.sizes?.join(', ') || 'toutes'}) et couleurs sont disponibles à la vente.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`${styles.radioLabel} ${
+                      quickStockStatus === 'partial_out' ? styles.radioSelected : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="quickStockStatus"
+                      value="partial_out"
+                      checked={quickStockStatus === 'partial_out'}
+                      onChange={() => setQuickStockStatus('partial_out')}
+                    />
+                    <div>
+                      <strong className={styles.stockOrangeText}>🟡 Rupture Partielle (Par Taille & Couleur)</strong>
+                      <p className={styles.stockSubText}>
+                        Définissez ci-dessous précisément quelles tailles ou couleurs sont en stock ou épuisées.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`${styles.radioLabel} ${
+                      quickStockStatus === 'total_out' ? styles.radioSelected : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="quickStockStatus"
+                      value="total_out"
+                      checked={quickStockStatus === 'total_out'}
+                      onChange={() => {
+                        setQuickStockStatus('total_out');
+                        setQuickStockMatrix((prev) => prev.map((m) => ({ ...m, inStock: false })));
+                      }}
+                    />
+                    <div>
+                      <strong className={styles.stockRedText}>🔴 Rupture Totale (Épuisé)</strong>
+                      <p className={styles.stockSubText}>
+                        L&apos;article est entièrement en rupture. Le bouton de commande sera bloqué sur le site.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Matrice Taille x Couleur si Rupture Partielle */}
+              {quickStockStatus === 'partial_out' && (
+                <div className={styles.matrixBox}>
+                  <div className={styles.matrixHeaderRow}>
+                    <div>
+                      <h4 className={styles.matrixTitle}>Matrice de Disponibilité Croisée</h4>
+                      <p className={styles.matrixSub}>
+                        Cliquez directement sur une case pour basculer entre <strong style={{ color: '#166534' }}>✓ En stock</strong> et <strong style={{ color: '#991B1B' }}>✕ Épuisé</strong>.
+                      </p>
+                    </div>
+
+                    <div className={styles.matrixToolbar}>
+                      <button
+                        type="button"
+                        onClick={() => setAllQuickMatrixStock(true)}
+                        className={styles.matrixToolBtn}
+                      >
+                        ✓ Tout en stock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAllQuickMatrixStock(false)}
+                        className={styles.matrixToolBtn}
+                      >
+                        ✕ Tout épuisé
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.matrixTableWrapper}>
+                    <table className={styles.matrixTable}>
+                      <thead>
+                        <tr>
+                          <th className={styles.matrixThCorner}>Couleur \ Taille</th>
+                          {(stockModalProduct.sizes || ['S', 'M', 'L']).map((sz) => (
+                            <th key={sz} className={styles.matrixThSize}>
+                              <div className={styles.sizeThHeader}>
+                                <span>{sz}</span>
+                                <div className={styles.thQuickBtns}>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleQuickSizeColumn(sz, true)}
+                                    title={`Tout en stock pour ${sz}`}
+                                    className={styles.miniColBtn}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleQuickSizeColumn(sz, false)}
+                                    title={`Tout épuisé pour ${sz}`}
+                                    className={styles.miniColBtn}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(stockModalProduct.colors && stockModalProduct.colors.length > 0 ? stockModalProduct.colors : ['Standard']).map((col) => (
+                          <tr key={col}>
+                            <td className={styles.matrixTdColor}>
+                              <div className={styles.colorTdContent}>
+                                <span
+                                  className={styles.matrixColorDot}
+                                  style={{ backgroundColor: getColorHex(col) }}
+                                />
+                                <span>{col}</span>
+                              </div>
+                            </td>
+                            {(stockModalProduct.sizes || ['S', 'M', 'L']).map((sz) => {
+                              const match = quickStockMatrix.find(
+                                (m) => m.size === sz && (m.color || 'Standard') === col
+                              );
+                              const inStock = match ? match.inStock : true;
+
+                              return (
+                                <td key={`${sz}-${col}`} className={styles.matrixTdCell}>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleQuickMatrixCell(sz, col)}
+                                    className={`${styles.matrixCellBtn} ${
+                                      inStock ? styles.cellInStock : styles.cellOutOfStock
+                                    }`}
+                                  >
+                                    {inStock ? (
+                                      <>
+                                        <span className={styles.cellIcon}>✓</span>
+                                        <span>En stock</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className={styles.cellIcon}>✕</span>
+                                        <span>Épuisé</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className={styles.stockModalFooter}>
+              <button
+                type="button"
+                onClick={() => setStockModalProduct(null)}
+                className={styles.stockModalCancelBtn}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveQuickStock}
+                className={styles.stockModalSaveBtn}
+              >
+                💾 Enregistrer le Stock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ============================================================
           MODAL: PRODUCT (ADD / EDIT)
