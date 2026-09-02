@@ -11,9 +11,9 @@ export default function BoutiqueClient() {
   const initialCat = searchParams.get('cat') || 'Toutes';
   const [activeCategory, setActiveCategory] = useState(initialCat);
 
-  // Combine 'Toutes' with dynamic category names
+  // Combine 'Toutes' with dynamic category names (no mock fallback)
   const categoryNames = useMemo(() => {
-    const names = dynamicCategories?.map((c) => c.name) || ['Robes', 'Chemises', 'Ensembles', 'Combinaisons', 'Manteaux'];
+    const names = dynamicCategories && dynamicCategories.length > 0 ? dynamicCategories.map((c) => c.name) : [];
     return ['Toutes', ...names];
   }, [dynamicCategories]);
 

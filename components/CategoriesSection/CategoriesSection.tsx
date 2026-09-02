@@ -91,7 +91,9 @@ export default function CategoriesSection() {
   if (!list || list.length === 0) return null;
 
   const activeCat = list[currentIndex] || list[0];
-  const prevCat = prevIndex !== null ? list[prevIndex] : null;
+  if (!activeCat || !activeCat.name) return null;
+
+  const prevCat = prevIndex !== null && list[prevIndex] ? list[prevIndex] : null;
 
   const countProducts = (catName: string) => {
     return products ? products.filter((p) => p.category === catName).length : 0;

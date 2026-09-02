@@ -11,6 +11,7 @@ import {
   computeStockStatusFromMatrix,
 } from '@/data/products';
 import { useOrders } from '@/hooks/useOrders';
+import { deleteCategoryFromSupabase, deleteProductFromSupabase } from '@/lib/supabase';
 import styles from './admin.module.css';
 
 const ADMIN_PASSWORD = 'velime2024';
@@ -534,6 +535,7 @@ ${itemsText}
 
   const handleDeleteCategory = (catId: string, catName: string) => {
     const updatedCategories = categories.filter((c) => c.id !== catId);
+    deleteCategoryFromSupabase(catId).catch((err) => console.warn('Supabase deleteCategory error:', err));
     saveData({
       heroTitle, heroSubtitle, heroCtaText, heroImage,
       categories: updatedCategories,
@@ -755,6 +757,7 @@ ${itemsText}
 
   const handleDeleteProduct = (productId: string, productName: string) => {
     const updatedProducts = products.filter((p) => p.id !== productId);
+    deleteProductFromSupabase(productId).catch((err) => console.warn('Supabase deleteProduct error:', err));
     saveData({
       heroTitle, heroSubtitle, heroCtaText, heroImage,
       categories,

@@ -118,6 +118,9 @@ export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
     if (data && data.length > 0) {
       return data.map(mapDbToProduct);
     }
+    if (data && data.length === 0) {
+      return [];
+    }
     return null;
   } catch (err) {
     console.warn('Supabase fetchProducts exception:', err);
@@ -191,6 +194,9 @@ export async function fetchCategoriesFromSupabase(): Promise<Category[] | null> 
         description: c.description || undefined,
         image: c.image || undefined,
       }));
+    }
+    if (data && data.length === 0) {
+      return [];
     }
     return null;
   } catch (err) {
@@ -319,22 +325,42 @@ export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: 
     return { success: false, message: 'Supabase n\'est pas encore configuré dans le fichier .env.local.' };
   }
   try {
-    // 1. Categories
-    const categoriesPayload = siteData.categories.map((c) => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      description: c.description || null,
-      image: c.image || null,
-    }));
-    if (categoriesPayload.length > 0) {
+    // 1. Categories - Sync active & clean up deleted
+    const currentCatIds = siteData.categories.map((c) => c.id);
+    const { data: existingCats } = await supabase.from('categories').select('id');
+    if (existingCats && existingCats.length > 0) {
+      const toDeleteCats = existingCats
+        .filter((ec) => !currentCatIds.includes(ec.id))
+        .map((ec) => ec.id);
+      if (toDeleteCats.length > 0) {
+        await supabase.from('categories').delete().in('id', toDeleteCats);
+      }
+    }
+    if (siteData.categories.length > 0) {
+      const categoriesPayload = siteData.categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description || null,
+        image: c.image || null,
+      }));
       const { error: catErr } = await supabase.from('categories').upsert(categoriesPayload, { onConflict: 'id' });
-      if (catErr) throw new Error(`Erreur catégories: ${catErr.message}`);
+      if (catErr) console.warn(`Erreur catégories: ${catErr.message}`);
     }
 
-    // 2. Products
-    const productsPayload = siteData.products.map(mapProductToDb);
-    if (productsPayload.length > 0) {
+    // 2. Products - Sync active & clean up deleted
+    const currentProdIds = siteData.products.map((p) => p.id);
+    const { data: existingProds } = await supabase.from('products').select('id');
+    if (existingProds && existingProds.length > 0) {
+      const toDeleteProds = existingProds
+        .filter((ep) => !currentProdIds.includes(ep.id))
+        .map((ep) => ep.id);
+      if (toDeleteProds.length > 0) {
+        await supabase.from('products').delete().in('id', toDeleteProds);
+      }
+    }
+    if (siteData.products.length > 0) {
+      const productsPayload = siteData.products.map(mapProductToDb);
       let { error: prodErr } = await supabase.from('products').upsert(productsPayload, { onConflict: 'id' });
       
       // Fallback if stock_matrix column is not yet in Supabase schema
@@ -348,7 +374,7 @@ export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: 
         prodErr = retryRes.error;
       }
 
-      if (prodErr) throw new Error(`Erreur articles: ${prodErr.message}`);
+      if (prodErr) console.warn(`Erreur articles: ${prodErr.message}`);
     }
 
     // 3. Settings
