@@ -15,12 +15,21 @@ interface Props {
 export default function ProductPage({ params }: Props) {
   const { slug } = use(params);
   const router = useRouter();
-  const { products: dynamicProducts } = useSiteData();
+  const { products: dynamicProducts, isLoaded } = useSiteData();
   
-  // Find product in dynamic products or fallback to static catalog
-  const product = 
-    dynamicProducts?.find((p) => p.slug === slug) || 
-    getProductBySlug(slug);
+  // Find product in dynamic products first, then static catalog as fallback
+  const product = dynamicProducts?.find((p) => p.slug === slug) ?? getProductBySlug(slug);
+
+  // Wait for localStorage to load before showing 404 — new products only exist in localStorage
+  if (!isLoaded) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', fontFamily: 'var(--font-sans)', color: '#9c8a77', fontSize: '0.85rem', letterSpacing: '0.08em' }}>
+          Chargement…
+        </div>
+      </div>
+    );
+  }
 
   if (!product) notFound();
 

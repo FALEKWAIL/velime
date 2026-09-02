@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/types';
 import { useSiteData } from '@/hooks/useSiteData';
-import { formatPrice, products as fallbackProducts } from '@/data/products';
+import { formatPrice } from '@/data/products';
 import styles from './NewArrivalsSlider.module.css';
 
 interface Props {
@@ -18,10 +18,12 @@ export default function NewArrivalsSlider({ products: initialProducts }: Props) 
   const trackRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get the 6 last products only (newest arrivals)
-  const allProducts = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts || fallbackProducts;
+  // Get the 6 latest products
+  const allProducts = dynamicProducts ?? [];
   const newProducts = allProducts.slice(0, 6);
   const totalItems = newProducts.length;
+
+  if (totalItems === 0) return null;
 
   // Scroll to specific product index
   const scrollToIndex = useCallback((index: number) => {

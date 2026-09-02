@@ -41,7 +41,7 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
   const trackRef = useRef<HTMLDivElement>(null);
   const header = useReveal();
 
-  const allProducts = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts || [];
+  const allProducts = dynamicProducts ?? [];
   const bestSellers = allProducts.filter((p) => p.isBestSeller);
   const displayProducts = bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 8);
 

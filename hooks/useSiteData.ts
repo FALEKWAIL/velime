@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { products as defaultProducts, defaultCategories } from '@/data/products';
 import { Product, Category } from '@/types';
 import {
   isSupabaseConfigured,
@@ -29,8 +28,9 @@ export const defaultSiteData: SiteData = {
   heroSubtitle: 'Une allure , toujours',
   heroCtaText: 'Découvrir',
   heroImage: '/images/hero-custom.jpg',
-  products: defaultProducts,
-  categories: defaultCategories,
+  // Start with empty arrays — real data comes from localStorage or Supabase
+  products: [],
+  categories: [],
   brands: [
     'ZARA', 'MANGO', 'SANDRO', 'MASSIMO DUTTI', 'COS', 'BA&SH',
     '& OTHER STORIES', 'ARKET', 'JACQUEMUS', 'ROUJE', 'SÉZANE', 'IRO PARIS'
@@ -64,8 +64,9 @@ export function useSiteData() {
           ...defaultSiteData,
           ...parsed,
           heroImage: customHeroImg || parsed.heroImage || defaultSiteData.heroImage,
-          products: parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts,
-          categories: parsed.categories && parsed.categories.length > 0 ? parsed.categories : defaultCategories,
+          // Respect stored values directly — even empty arrays mean the admin cleared them
+          products: Array.isArray(parsed.products) ? parsed.products : [],
+          categories: Array.isArray(parsed.categories) ? parsed.categories : [],
           brands: parsed.brands && parsed.brands.length > 0 ? parsed.brands : defaultSiteData.brands,
           lookbookPhotos: parsed.lookbookPhotos && parsed.lookbookPhotos.length > 0 ? parsed.lookbookPhotos : defaultSiteData.lookbookPhotos,
         });
@@ -108,8 +109,9 @@ export function useSiteData() {
             heroImage: resolvedHeroImg,
             brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
             lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
-            categories: sbCategories && sbCategories.length > 0 ? sbCategories : prev.categories,
-            products: sbProducts && sbProducts.length > 0 ? sbProducts : prev.products,
+            // Respect empty arrays from Supabase — they mean the admin cleared the data
+            categories: Array.isArray(sbCategories) ? sbCategories : prev.categories,
+            products: Array.isArray(sbProducts) ? sbProducts : prev.products,
           };
 
           // Keep local storage fresh
