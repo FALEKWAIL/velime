@@ -59,13 +59,13 @@ export default function Footer() {
             <h3 className={styles.colTitle}>Contact</h3>
             <ul className={styles.colList}>
               <li>
-                <a href="https://wa.me/213000000000" target="_blank" rel="noopener noreferrer" className={styles.footLink}>
-                  WhatsApp
+                <a href="https://wa.me/213551015886" target="_blank" rel="noopener noreferrer" className={styles.footLink}>
+                  WhatsApp : 0551 01 58 86
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com/velime_boutique" target="_blank" rel="noopener noreferrer" className={styles.footLink}>
-                  Instagram
+                <a href="https://instagram.com/velime.co" target="_blank" rel="noopener noreferrer" className={styles.footLink}>
+                  Instagram : @velime.co
                 </a>
               </li>
               <li className={styles.footText}>Livraison dans 58 wilayas</li>

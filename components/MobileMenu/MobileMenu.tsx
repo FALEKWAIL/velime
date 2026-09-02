@@ -81,20 +81,20 @@ export default function MobileMenu({ open, onClose }: Props) {
           <p className={styles.footerText}>Une mode inspirée par l&apos;élégance moderne.</p>
           <div className={styles.socialLinks}>
             <a
-              href="https://instagram.com/velime_boutique"
+              href="https://instagram.com/velime.co"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.socialLink}
             >
-              Instagram
+              Instagram (@velime.co)
             </a>
             <a
-              href="https://wa.me/213000000000"
+              href="https://wa.me/213551015886"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.socialLink}
             >
-              WhatsApp
+              WhatsApp (0551 01 58 86)
             </a>
           </div>
         </div>

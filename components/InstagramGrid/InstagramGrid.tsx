@@ -38,13 +38,13 @@ export default function InstagramGrid() {
         <p className={styles.label}>INSTAGRAM</p>
         <h2 className={styles.title}>Suivez-nous sur Instagram</h2>
         <a
-          href="https://instagram.com/velime_boutique"
+          href="https://instagram.com/velime.co"
           target="_blank"
           rel="noopener noreferrer"
           className={styles.handle}
           id="instagram-link"
         >
-          @VELIME
+          @velime.co
         </a>
       </div>
 
@@ -52,7 +52,7 @@ export default function InstagramGrid() {
         {photos.map((photo, i) => (
           <a
             key={i}
-            href="https://instagram.com/velime_boutique"
+            href="https://instagram.com/velime.co"
             target="_blank"
             rel="noopener noreferrer"
             className={`${styles.photoLink} reveal-scale ${grid.visible ? 'visible' : ''}`}
