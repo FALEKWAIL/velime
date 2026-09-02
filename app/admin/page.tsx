@@ -467,7 +467,7 @@ ${itemsText}
      ============================================================ */
   const openNewCategoryModal = () => {
     setEditingCategory(null);
-    setCatForm({ name: '', slug: '', description: '', image: '/images/p1.jpg' });
+    setCatForm({ name: '', slug: '', description: '', image: '' });
     setIsCategoryModalOpen(true);
   };
 
@@ -639,8 +639,8 @@ ${itemsText}
       badge: '',
       isNew: true,
       isBestSeller: false,
-      image: '/images/p1.jpg',
-      images: ['/images/p1.jpg'],
+      image: '',
+      images: [],
       newImageUrl: '',
     });
     setIsProductModalOpen(true);
@@ -2711,36 +2711,44 @@ ${itemsText}
 
               {/* Multiple Photos Gallery Management */}
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Galerie Multi-Photos de l&apos;Article ({prodForm.images.length} photo(s))</label>
+                <label className={styles.formLabel}>
+                  Galerie Photos de l&apos;Article ({prodForm.images.length} photo(s))
+                </label>
                 
-                <div className={styles.photosThumbList}>
-                  {prodForm.images.map((imgUrl, idx) => (
-                    <div key={idx} className={styles.photoThumbItem}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imgUrl} alt={`Photo ${idx + 1}`} className={styles.galleryThumbImg} />
-                      <div className={styles.photoThumbActions}>
-                        {idx === 0 ? (
-                          <span className={styles.primaryBadge}>Principale</span>
-                        ) : (
+                {prodForm.images.length > 0 ? (
+                  <div className={styles.photosThumbList}>
+                    {prodForm.images.map((imgUrl, idx) => (
+                      <div key={idx} className={styles.photoThumbItem}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imgUrl} alt={`Photo ${idx + 1}`} className={styles.galleryThumbImg} />
+                        <div className={styles.photoThumbActions}>
+                          {idx === 0 ? (
+                            <span className={styles.primaryBadge}>Principale</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSetMainImage(idx)}
+                              className={styles.setMainBtn}
+                            >
+                              Définir principale
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleSetMainImage(idx)}
-                            className={styles.setMainBtn}
+                            onClick={() => handleRemoveImageFromGallery(idx)}
+                            className={styles.deletePhotoBtn}
                           >
-                            Définir principale
+                            ✕
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImageFromGallery(idx)}
-                          className={styles.deletePhotoBtn}
-                        >
-                          ✕
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.emptyGalleryNotice}>
+                    <span>📷 Aucune photo importée pour le moment. Cliquez ci-dessous pour choisir vos photos.</span>
+                  </div>
+                )}
 
                 <div className={styles.addImageRow}>
                   <label className={styles.directUploadBtn}>
@@ -2842,8 +2850,24 @@ ${itemsText}
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Photo de la Catégorie</label>
                 <div className={styles.catPhotoInputRow}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={catForm.image || '/images/p1.jpg'} alt="Aperçu" className={styles.catFormThumb} />
+                  {catForm.image ? (
+                    <div className={styles.catThumbWrapper}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={catForm.image} alt="Aperçu" className={styles.catFormThumb} />
+                      <button
+                        type="button"
+                        onClick={() => setCatForm(f => ({ ...f, image: '' }))}
+                        className={styles.catRemovePhotoBtn}
+                        title="Supprimer la photo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.catNoPhotoBadge}>
+                      <span>📷 Aucune photo sélectionnée</span>
+                    </div>
+                  )}
                   <label className={styles.directUploadBtn}>
                     <input
                       type="file"
@@ -2852,7 +2876,7 @@ ${itemsText}
                       style={{ display: 'none' }}
                     />
                     <UploadIcon />
-                    <span>📁 Télécharger une photo depuis l&apos;appareil</span>
+                    <span>📁 {catForm.image ? 'Changer la photo' : 'Télécharger une photo depuis l\'appareil'}</span>
                   </label>
                 </div>
               </div>
