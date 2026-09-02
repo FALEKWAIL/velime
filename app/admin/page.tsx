@@ -40,6 +40,10 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
 
+  // Inline confirmation state (replaces window.confirm which fails on mobile)
+  const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<string | null>(null);
+  const [confirmDeleteCategoryId, setConfirmDeleteCategoryId] = useState<string | null>(null);
+
   // Orders management filters & search
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
@@ -529,15 +533,6 @@ ${itemsText}
   };
 
   const handleDeleteCategory = (catId: string, catName: string) => {
-    const count = products.filter((p) => p.category === catName).length;
-    if (count > 0) {
-      if (!confirm(`La catégorie « ${catName} » contient ${count} article(s). Voulez-vous vraiment la supprimer ?`)) {
-        return;
-      }
-    } else if (!confirm(`Supprimer la catégorie « ${catName} » ?`)) {
-      return;
-    }
-
     const updatedCategories = categories.filter((c) => c.id !== catId);
     saveData({
       heroTitle, heroSubtitle, heroCtaText, heroImage,
@@ -546,6 +541,7 @@ ${itemsText}
       brands,
       lookbookPhotos: lookbookList,
     });
+    setConfirmDeleteCategoryId(null);
     showNotification(`Catégorie « ${catName} » supprimée.`);
   };
 
@@ -758,7 +754,6 @@ ${itemsText}
   };
 
   const handleDeleteProduct = (productId: string, productName: string) => {
-    if (!confirm(`Supprimer définitivement l'article « ${productName} » ?`)) return;
     const updatedProducts = products.filter((p) => p.id !== productId);
     saveData({
       heroTitle, heroSubtitle, heroCtaText, heroImage,
@@ -767,6 +762,7 @@ ${itemsText}
       brands,
       lookbookPhotos: lookbookList,
     });
+    setConfirmDeleteProductId(null);
     showNotification(`Article « ${productName} » supprimé.`);
   };
 
@@ -1779,13 +1775,32 @@ ${itemsText}
                           >
                             Modifier
                           </button>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id, p.name)}
-                            className={styles.actionBtnDelete}
-                            title="Supprimer"
-                          >
-                            Supprimer
-                          </button>
+
+                          {confirmDeleteProductId === p.id ? (
+                            <div className={styles.inlineConfirmRow}>
+                              <span className={styles.inlineConfirmText}>Confirmer ?</span>
+                              <button
+                                onClick={() => handleDeleteProduct(p.id, p.name)}
+                                className={styles.inlineConfirmYes}
+                              >
+                                ✓ Oui
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteProductId(null)}
+                                className={styles.inlineConfirmNo}
+                              >
+                                ✕ Non
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteProductId(p.id)}
+                              className={styles.actionBtnDelete}
+                              title="Supprimer"
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1827,12 +1842,31 @@ ${itemsText}
                           >
                             Modifier
                           </button>
-                          <button
-                            onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                            className={styles.btnDanger}
-                          >
-                            Supprimer
-                          </button>
+
+                          {confirmDeleteCategoryId === cat.id ? (
+                            <div className={styles.inlineConfirmRow}>
+                              <span className={styles.inlineConfirmText}>Confirmer ?</span>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                                className={styles.inlineConfirmYes}
+                              >
+                                ✓ Oui
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteCategoryId(null)}
+                                className={styles.inlineConfirmNo}
+                              >
+                                ✕ Non
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteCategoryId(cat.id)}
+                              className={styles.btnDanger}
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -668,6 +668,55 @@
   color: #ffffff;
 }
 
+/* Inline 2-step delete confirmation — replaces window.confirm() */
+.inlineConfirmRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.inlineConfirmText {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #c53030;
+}
+
+.inlineConfirmYes {
+  padding: 0.3rem 0.6rem;
+  background-color: #c53030;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.inlineConfirmYes:hover {
+  background-color: #9b2323;
+}
+
+.inlineConfirmNo {
+  padding: 0.3rem 0.6rem;
+  background-color: #f7f4ee;
+  color: #5c4d3e;
+  border: 1px solid #ddd5c8;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.inlineConfirmNo:hover {
+  background-color: #ede7dc;
+}
+
 .emptyState {
   padding: 3rem;
   text-align: center;
