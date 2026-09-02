@@ -2,8 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { Product, Category } from '@/types';
 import { SiteData } from '@/hooks/useSiteData';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const DEFAULT_SUPABASE_URL = 'https://mrgekwriowpksuwnkgto.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yZ2Vrd3Jpb3dwa3N1d25rZ3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwOTA5MjgsImV4cCI6MjEwMzY2NjkyOH0.yj5TD1NEHeTq66HD49AzrLHJZ2xhW3N9TW2FiJZIt4I';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(

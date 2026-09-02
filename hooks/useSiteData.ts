@@ -26,9 +26,9 @@ export interface SiteData {
 
 export const defaultSiteData: SiteData = {
   heroTitle: 'VELIME',
-  heroSubtitle: "L'élégance au quotidien",
+  heroSubtitle: 'Une allure , toujours',
   heroCtaText: 'Découvrir',
-  heroImage: '/images/hero-fabric.jpg',
+  heroImage: '/images/hero-custom.jpg',
   products: defaultProducts,
   categories: defaultCategories,
   brands: [
