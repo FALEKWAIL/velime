@@ -68,8 +68,6 @@ export default function Footer() {
                   Instagram : @velime.co
                 </a>
               </li>
-              <li className={styles.footText}>Livraison dans 58 wilayas</li>
-              <li className={styles.footText}>Paiement sécurisé</li>
             </ul>
           </div>
         </div>
@@ -77,11 +75,6 @@ export default function Footer() {
 
       <div className={styles.bottom}>
         <p className={styles.copyright}>© {new Date().getFullYear()} Velime. Tous droits réservés.</p>
-        <div className={styles.adminLinkWrapper}>
-          <Link href="/admin" className={styles.adminFootLink} id="footer-admin-link">
-            Accès Administration
-          </Link>
-        </div>
       </div>
     </footer>
   );

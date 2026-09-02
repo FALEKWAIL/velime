@@ -7,6 +7,7 @@ import Header from '@/components/Header/Header';
 import Footer from '@/components/Footer/Footer';
 import WhatsAppFAB from '@/components/WhatsAppFAB/WhatsAppFAB';
 import BackToTop from '@/components/BackToTop/BackToTop';
+import AdminSwitchBar from '@/components/AdminSwitchBar/AdminSwitchBar';
 
 export const metadata: Metadata = {
   title: 'Velime — Mode Femme Élégante',
@@ -35,6 +36,7 @@ export default function RootLayout({
           <Footer />
           <WhatsAppFAB />
           <BackToTop />
+          <AdminSwitchBar />
         </CartProvider>
       </body>
     </html>

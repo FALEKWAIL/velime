@@ -70,11 +70,6 @@ export default function MobileMenu({ open, onClose }: Props) {
               Mon Panier
             </Link>
           </li>
-          <li>
-            <Link href="/admin" className={styles.navLink} onClick={onClose} style={{ color: '#8c7864', fontSize: '0.75rem' }}>
-              Panneau d&apos;Administration
-            </Link>
-          </li>
         </ul>
 
         <div className={styles.drawerFooter}>

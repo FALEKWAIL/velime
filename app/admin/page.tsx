@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Product, Category, StockStatus, StockVariant, Order, OrderItem, OrderStatus } from '@/types';
 import { useSiteData, defaultSiteData, HERO_IMAGE_KEY } from '@/hooks/useSiteData';
 import {
@@ -153,14 +154,38 @@ ${itemsText}
     }
   }, [heroTitle, heroSubtitle, heroCtaText, heroImage, heroFormDirty]);
 
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const savedAuth = localStorage.getItem('velime-admin-session');
+        if (savedAuth === 'active') {
+          setAuthed(true);
+        }
+      }
+    } catch {}
+  }, []);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === ADMIN_PASSWORD) {
       setAuthed(true);
+      try {
+        localStorage.setItem('velime-admin-session', 'active');
+      } catch {}
       setPasswordError('');
+      showNotification('Bienvenue dans votre espace administrateur !');
     } else {
       setPasswordError('Mot de passe incorrect.');
     }
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('velime-admin-session');
+    } catch {}
+    setAuthed(false);
+    setPasswordInput('');
+    showNotification('Déconnexion réussie.');
   };
 
   const showNotification = (msg: string) => {
@@ -907,14 +932,17 @@ ${itemsText}
         </nav>
 
         <div className={styles.sidebarBottom}>
+          <Link href="/" className={styles.viewSite}>
+            <span>🌐 Voir le site</span>
+            <ExternalLinkIcon />
+          </Link>
           <button onClick={handleResetDefaults} className={styles.resetBtn}>
             <ResetIcon />
             <span>Réinitialiser</span>
           </button>
-          <a href="/" target="_blank" className={styles.viewSite}>
-            <span>Voir le site</span>
-            <ExternalLinkIcon />
-          </a>
+          <button onClick={handleLogout} className={styles.logoutSideBtn} title="Verrouiller l'accès administrateur">
+            <span>🔒 Déconnexion</span>
+          </button>
         </div>
       </aside>
 
@@ -959,6 +987,17 @@ ${itemsText}
             >
               Lookbook ({lookbookList.length})
             </button>
+            <Link href="/" className={`${styles.mobileTabChip} ${styles.mobileSwitchSiteChip}`}>
+              🌐 Voir le site
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`${styles.mobileTabChip} ${styles.mobileLogoutChip}`}
+              title="Déconnexion"
+            >
+              🔒 Quitter
+            </button>
           </div>
 
           <div>
@@ -982,6 +1021,18 @@ ${itemsText}
 
           <div className={styles.topActions}>
             {savedMsg && <span className={styles.savedMsg}>{savedMsg}</span>}
+            <Link href="/" className={styles.switchSiteBtn} id="admin-switch-to-site-btn">
+              <span>🌐 Voir le site</span>
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={styles.logoutBtn}
+              id="admin-logout-btn"
+              title="Verrouiller l'accès administrateur"
+            >
+              <span>🔒 Déconnexion</span>
+            </button>
             {activeTab === 'products' && (
               <button className={styles.addPrimaryBtn} onClick={openNewProductModal} id="add-product-main-btn">
                 <PlusIcon />

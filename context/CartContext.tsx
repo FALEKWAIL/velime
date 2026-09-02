@@ -70,19 +70,50 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, dispatch] = useReducer(cartReducer, []);
+  const isLoadedRef = React.useRef(false);
 
+  // 1. Initial load from LocalStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('velime-cart');
       if (saved) {
-        dispatch({ type: 'LOAD_CART', items: JSON.parse(saved) });
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          dispatch({ type: 'LOAD_CART', items: parsed });
+        }
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Error reading cart from localStorage:', err);
+    } finally {
+      isLoadedRef.current = true;
+    }
   }, []);
 
+  // 2. Persist to LocalStorage ONLY after initial load
   useEffect(() => {
-    localStorage.setItem('velime-cart', JSON.stringify(items));
+    if (!isLoadedRef.current) return;
+    try {
+      localStorage.setItem('velime-cart', JSON.stringify(items));
+    } catch (err) {
+      console.warn('Error saving cart to localStorage:', err);
+    }
   }, [items]);
+
+  // 3. Multi-tab synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'velime-cart' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            dispatch({ type: 'LOAD_CART', items: parsed });
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const addItem = (product: Product, size: string, color?: string, quantity = 1) =>
     dispatch({ type: 'ADD_ITEM', product, size, color, quantity });

@@ -3210,4 +3210,88 @@
   }
 }
 
+/* ============================================================
+   ADMIN SWITCH SITE & LOGOUT BUTTONS
+   ============================================================ */
+.switchSiteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #FAF4EC;
+  color: #3B2C20;
+  border: 1px solid #D8C7B5;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
 
+.switchSiteBtn:hover {
+  background-color: #3B2C20;
+  color: #FFFFFF;
+  border-color: #3B2C20;
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid #E2D8CC;
+  color: #7A6B5C;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logoutBtn:hover {
+  background-color: #FEE2E2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.logoutSideBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: 1px solid #EAE3D9;
+  color: #8C7864;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logoutSideBtn:hover {
+  background-color: #FEE2E2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.mobileSwitchSiteChip {
+  background-color: #3B2C20 !important;
+  color: #FFFFFF !important;
+  border-color: #3B2C20 !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mobileLogoutChip {
+  background-color: #FEE2E2 !important;
+  color: #DC2626 !important;
+  border-color: #FECACA !important;
+  cursor: pointer;
+}
