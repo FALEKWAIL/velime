@@ -15,7 +15,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
 
   return (
     <Link
-      href={`/produit/${product.slug}`}
+      href={`/produit/${product.slug || product.id}`}
       className={`${styles.card} reveal-scale`}
       id={`product-card-${product.id}`}
       style={{ transitionDelay: `${index * 0.08}s` }}

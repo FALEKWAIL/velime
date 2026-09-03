@@ -128,6 +128,46 @@ export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
   }
 }
 
+export async function fetchProductBySlugFromSupabase(slugOrId: string): Promise<Product | null> {
+  if (!supabase) return null;
+  try {
+    const raw = slugOrId.trim();
+    const decoded = decodeURIComponent(raw).trim().toLowerCase();
+
+    // Query by exact slug, case-insensitive slug, or id
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(`slug.eq.${raw},slug.ilike.${decoded},id.eq.${raw}`)
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      return mapDbToProduct(data[0]);
+    }
+
+    // Fallback: fetch all and find in memory to handle any special character nuances
+    const { data: allData } = await supabase
+      .from('products')
+      .select('*');
+
+    if (allData && allData.length > 0) {
+      const match = allData.find((p) => {
+        const pSlug = (p.slug || '').toLowerCase().trim();
+        const pId = (p.id || '').toLowerCase().trim();
+        return pSlug === decoded || pId === decoded || pSlug === raw.toLowerCase() || pId === raw.toLowerCase();
+      });
+      if (match) {
+        return mapDbToProduct(match);
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('Supabase fetchProductBySlug exception:', err);
+    return null;
+  }
+}
+
 export async function saveProductToSupabase(product: Product): Promise<boolean> {
   if (!supabase) return false;
   try {

@@ -108,7 +108,7 @@ export default function NewArrivalsSlider({ products: initialProducts }: Props) 
               key={`new-prod-${product.id}-${idx}`}
               className={`${styles.cardWrapper} ${idx === activeIndex ? styles.cardActive : ''}`}
             >
-              <Link href={`/produit/${product.slug}`} className={styles.cardLink}>
+              <Link href={`/produit/${product.slug || product.id}`} className={styles.cardLink}>
                 {/* Arch Dome Photo Container */}
                 <div className={styles.archWrapper}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}

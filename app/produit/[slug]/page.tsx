@@ -1,11 +1,14 @@
 'use client';
-import { useState, useMemo } from 'react';
-import { notFound, useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { use } from 'react';
-import { getProductBySlug, formatPrice, getColorHex, isVariantInStock } from '@/data/products';
+import { formatPrice, isVariantInStock } from '@/data/products';
 import { useSiteData } from '@/hooks/useSiteData';
 import { useCart } from '@/context/CartContext';
+import { fetchProductBySlugFromSupabase } from '@/lib/supabase';
+import { Product } from '@/types';
 import styles from './product.module.css';
 
 interface Props {
@@ -14,32 +17,140 @@ interface Props {
 
 export default function ProductPage({ params }: Props) {
   const { slug } = use(params);
-  const router = useRouter();
   const { products: dynamicProducts, isLoaded } = useSiteData();
-  
-  // Find product in dynamic products first, then static catalog as fallback
-  const product = dynamicProducts?.find((p) => p.slug === slug) ?? getProductBySlug(slug);
+  const [supabaseProduct, setSupabaseProduct] = useState<Product | null>(null);
+  const [isFetchingSupabase, setIsFetchingSupabase] = useState(false);
+  const [hasAttemptedSupabase, setHasAttemptedSupabase] = useState(false);
 
-  // Wait for localStorage to load before showing 404 — new products only exist in localStorage
-  if (!isLoaded) {
+  // 1. Check if product exists in dynamicProducts (memory/cache)
+  const productFromList = useMemo(() => {
+    if (!dynamicProducts || dynamicProducts.length === 0) return null;
+    const raw = (slug || '').trim();
+    const decoded = decodeURIComponent(raw).trim().toLowerCase();
+    const lowerRaw = raw.toLowerCase();
+
     return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', fontFamily: 'var(--font-sans)', color: '#9c8a77', fontSize: '0.85rem', letterSpacing: '0.08em' }}>
-          Chargement…
+      dynamicProducts.find((p) => {
+        const pSlug = (p.slug || '').toLowerCase().trim();
+        const pId = (p.id || '').toLowerCase().trim();
+        const pName = (p.name || '').toLowerCase().trim();
+        return (
+          pSlug === decoded ||
+          pSlug === lowerRaw ||
+          pId === decoded ||
+          pId === lowerRaw ||
+          pName === decoded ||
+          pName === lowerRaw
+        );
+      }) || null
+    );
+  }, [dynamicProducts, slug]);
+
+  // 2. If not found in dynamicProducts, directly fetch from Supabase
+  useEffect(() => {
+    if (productFromList) return;
+
+    let isMounted = true;
+    setIsFetchingSupabase(true);
+
+    fetchProductBySlugFromSupabase(slug)
+      .then((p) => {
+        if (isMounted) {
+          setSupabaseProduct(p);
+          setHasAttemptedSupabase(true);
+          setIsFetchingSupabase(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setHasAttemptedSupabase(true);
+          setIsFetchingSupabase(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, productFromList]);
+
+  const resolvedProduct = productFromList || supabaseProduct;
+
+  // Show loading skeleton while data is still loading
+  if (!resolvedProduct) {
+    if (!isLoaded || isFetchingSupabase || !hasAttemptedSupabase) {
+      return (
+        <div style={{ minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            border: '2.5px solid #e8e2dc',
+            borderTopColor: '#2b221a',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <p style={{
+            fontFamily: 'var(--font-sans)',
+            color: '#8c7864',
+            fontSize: '0.85rem',
+            letterSpacing: '0.08em',
+          }}>
+            Chargement de l&apos;article…
+          </p>
+          <style>{`
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
+      );
+    }
+
+    // Truly not found
+    return (
+      <div style={{ minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', padding: '2rem', textAlign: 'center' }}>
+        <span style={{ fontSize: '2.5rem' }}>👗</span>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', color: '#2b221a', fontWeight: 500, margin: 0 }}>
+          Article introuvable
+        </h2>
+        <p style={{ color: '#8c7864', fontSize: '0.9rem', maxWidth: '380px', lineHeight: 1.5, margin: 0 }}>
+          Cet article n&apos;est plus disponible ou son lien a été modifié.
+        </p>
+        <Link
+          href="/boutique"
+          style={{
+            marginTop: '0.75rem',
+            padding: '0.75rem 1.75rem',
+            backgroundColor: '#2b221a',
+            color: '#ffffff',
+            borderRadius: '4px',
+            textDecoration: 'none',
+            fontSize: '0.8rem',
+            letterSpacing: '0.1em',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+          }}
+        >
+          Découvrir la collection →
+        </Link>
       </div>
     );
   }
 
-  if (!product) notFound();
+  // Safe unconditional hook execution in sub-component
+  return <ProductDetailContent product={resolvedProduct} />;
+}
 
+function ProductDetailContent({ product }: { product: Product }) {
+  const router = useRouter();
   const { addItem } = useCart();
-  const productColors = useMemo(() => product.colors && product.colors.length > 0 ? product.colors : [], [product.colors]);
+
+  const productColors = useMemo(
+    () => (product.colors && product.colors.length > 0 ? product.colors : []),
+    [product.colors]
+  );
 
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
-  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
-
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -47,9 +158,10 @@ export default function ProductPage({ params }: Props) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   // Extract gallery images
-  const galleryImages = product.images && product.images.length > 0 
-    ? product.images 
-    : [product.image || '/images/p1.jpg'];
+  const galleryImages =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image || '/images/p1.jpg'];
 
   const currentImage = galleryImages[selectedImageIndex] || galleryImages[0];
 
@@ -87,9 +199,8 @@ export default function ProductPage({ params }: Props) {
     setSelectedColor(newColor);
     setError('');
 
-    // If current selected size is not in stock for new color, auto-switch to first available size
     if (selectedSize && !isVariantInStock(product, selectedSize, newColor)) {
-      const firstAvailSize = product.sizes.find(sz => isVariantInStock(product, sz, newColor));
+      const firstAvailSize = product.sizes.find((sz) => isVariantInStock(product, sz, newColor));
       setSelectedSize(firstAvailSize || '');
     }
   };
@@ -97,19 +208,16 @@ export default function ProductPage({ params }: Props) {
   const handleAddToCart = () => {
     if (isTotalOut) return;
 
-    // Check color selection if product has colors
     if (productColors.length > 0 && !selectedColor) {
       setError('Veuillez sélectionner une couleur.');
       return;
     }
 
-    // Check size selection
     if (!selectedSize) {
       setError('Veuillez sélectionner une taille.');
       return;
     }
 
-    // Check precise matrix availability
     if (!isVariantInStock(product, selectedSize, selectedColor || undefined)) {
       setError(`La combinaison (${selectedColor ? selectedColor + ' - ' : ''}Taille ${selectedSize}) est actuellement épuisée.`);
       return;
@@ -124,7 +232,7 @@ export default function ProductPage({ params }: Props) {
   const handleOrderNowClick = () => {
     if (isTotalOut) return;
     const params = new URLSearchParams();
-    params.set('slug', product.slug);
+    params.set('slug', product.slug || product.id);
     if (selectedSize) params.set('size', selectedSize);
     if (selectedColor) params.set('color', selectedColor);
     if (quantity > 1) params.set('qty', quantity.toString());
@@ -257,7 +365,7 @@ export default function ProductPage({ params }: Props) {
           <div className={styles.divider} />
 
           {/* ============================================================
-              DROPDOWN SELECTORS (LIKE SCREENSHOT)
+              DROPDOWN SELECTORS
              ============================================================ */}
           {productColors.length > 0 && (
             <div className={styles.selectOptionGroup}>
@@ -332,7 +440,7 @@ export default function ProductPage({ params }: Props) {
           {error && <p className={styles.error}>{error}</p>}
 
           {/* ============================================================
-              QUANTITY + AJOUTER AU PANIER ROW (EXACTLY LIKE SCREENSHOT)
+              QUANTITY + AJOUTER AU PANIER ROW
              ============================================================ */}
           <div className={styles.cartActionRow}>
             <div className={styles.qtyBox}>
