@@ -2,12 +2,21 @@ import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/animations.css';
 import { CartProvider } from '@/context/CartContext';
+import { SiteDataProvider, SiteData } from '@/context/SiteDataContext';
+import {
+  fetchProductsFromSupabase,
+  fetchCategoriesFromSupabase,
+  fetchSiteSettingsFromSupabase,
+} from '@/lib/supabase';
 import AnnouncementBar from '@/components/AnnouncementBar/AnnouncementBar';
 import Header from '@/components/Header/Header';
 import Footer from '@/components/Footer/Footer';
 import WhatsAppFAB from '@/components/WhatsAppFAB/WhatsAppFAB';
 import BackToTop from '@/components/BackToTop/BackToTop';
 import AdminSwitchBar from '@/components/AdminSwitchBar/AdminSwitchBar';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Velime — Mode Femme Élégante',
@@ -21,23 +30,47 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let initialData: Partial<SiteData> = {};
+  try {
+    const [products, categories, settings] = await Promise.all([
+      fetchProductsFromSupabase(),
+      fetchCategoriesFromSupabase(),
+      fetchSiteSettingsFromSupabase(),
+    ]);
+
+    initialData = {
+      products: products || [],
+      categories: categories || [],
+      heroTitle: settings?.heroTitle,
+      heroSubtitle: settings?.heroSubtitle,
+      heroCtaText: settings?.heroCtaText,
+      heroImage: settings?.heroImage,
+      brands: settings?.brands,
+      lookbookPhotos: settings?.lookbookPhotos,
+    };
+  } catch (err) {
+    console.warn('SSR Supabase fetch error in RootLayout:', err);
+  }
+
   return (
     <html lang="fr">
       <body>
-        <CartProvider>
-          <AnnouncementBar />
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <WhatsAppFAB />
-          <BackToTop />
-          <AdminSwitchBar />
-        </CartProvider>
+        <SiteDataProvider initialData={initialData}>
+          <CartProvider>
+            <AnnouncementBar />
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <WhatsAppFAB />
+            <BackToTop />
+            <AdminSwitchBar />
+          </CartProvider>
+        </SiteDataProvider>
       </body>
     </html>
   );
