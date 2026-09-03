@@ -805,6 +805,10 @@ ${itemsText}
         stockMatrix: syncMatrix(f.sizes, updatedColors, f.stockMatrix),
         customColorInput: '',
       }));
+      showNotification(`Couleur « ${color} » ajoutée.`);
+    } else {
+      setProdForm(f => ({ ...f, customColorInput: '' }));
+      showNotification(`La couleur « ${color} » est déjà sélectionnée.`);
     }
   };
 
@@ -820,6 +824,10 @@ ${itemsText}
         stockMatrix: syncMatrix(updatedSizes, f.colors, f.stockMatrix),
         customSizeInput: '',
       }));
+      showNotification(`Taille « ${size} » ajoutée.`);
+    } else {
+      setProdForm(f => ({ ...f, customSizeInput: '' }));
+      showNotification(`La taille « ${size} » est déjà sélectionnée.`);
     }
   };
 
@@ -2468,6 +2476,58 @@ ${itemsText}
                   })}
                 </div>
 
+                {/* Display any custom colors that aren't in the default palette */}
+                {prodForm.colors.filter((c) => !COLOR_PALETTE.some((p) => p.name.toLowerCase() === c.toLowerCase())).length > 0 && (
+                  <div style={{ marginTop: '0.6rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#8c7864', fontWeight: 600 }}>Couleurs personnalisées :</span>
+                    {prodForm.colors
+                      .filter((c) => !COLOR_PALETTE.some((p) => p.name.toLowerCase() === c.toLowerCase()))
+                      .map((customCol) => (
+                        <span
+                          key={customCol}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.3rem 0.75rem',
+                            backgroundColor: '#2b221a',
+                            color: '#ffffff',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span>{customCol}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = prodForm.colors.filter((c) => c !== customCol);
+                              setProdForm((f) => ({
+                                ...f,
+                                colors: updated,
+                                availableColors: updated,
+                                stockMatrix: syncMatrix(f.sizes, updated, f.stockMatrix),
+                              }));
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ffaaaa',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                              fontWeight: 'bold',
+                              lineHeight: 1,
+                              padding: 0,
+                            }}
+                            title={`Supprimer ${customCol}`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                )}
+
                 {/* Custom Color Adder */}
                 <div className={styles.customAdderRow}>
                   <input
@@ -2530,6 +2590,58 @@ ${itemsText}
                     );
                   })}
                 </div>
+
+                {/* Display any custom sizes that aren't in DEFAULT_SIZES */}
+                {prodForm.sizes.filter((s) => !DEFAULT_SIZES.includes(s)).length > 0 && (
+                  <div style={{ marginTop: '0.6rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#8c7864', fontWeight: 600 }}>Tailles personnalisées :</span>
+                    {prodForm.sizes
+                      .filter((s) => !DEFAULT_SIZES.includes(s))
+                      .map((customSz) => (
+                        <span
+                          key={customSz}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.3rem 0.75rem',
+                            backgroundColor: '#2b221a',
+                            color: '#ffffff',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span>{customSz}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedSizes = prodForm.sizes.filter((s) => s !== customSz);
+                              setProdForm((f) => ({
+                                ...f,
+                                sizes: updatedSizes,
+                                availableSizes: updatedSizes,
+                                stockMatrix: syncMatrix(updatedSizes, f.colors, f.stockMatrix),
+                              }));
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ffaaaa',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                              fontWeight: 'bold',
+                              lineHeight: 1,
+                              padding: 0,
+                            }}
+                            title={`Supprimer ${customSz}`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                )}
 
                 {/* Custom Size Adder */}
                 <div className={styles.customAdderRow}>

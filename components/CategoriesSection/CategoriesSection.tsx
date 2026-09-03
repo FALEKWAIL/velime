@@ -90,10 +90,11 @@ export default function CategoriesSection() {
 
   if (!list || list.length === 0) return null;
 
-  const activeCat = list[currentIndex] || list[0];
+  const safeIndex = currentIndex < total ? currentIndex : 0;
+  const activeCat = list[safeIndex] || list[0];
   if (!activeCat || !activeCat.name) return null;
 
-  const prevCat = prevIndex !== null && list[prevIndex] ? list[prevIndex] : null;
+  const prevCat = prevIndex !== null && prevIndex < total && list[prevIndex] ? list[prevIndex] : null;
 
   const countProducts = (catName: string) => {
     return products ? products.filter((p) => p.category === catName).length : 0;
@@ -157,7 +158,7 @@ export default function CategoriesSection() {
               <Link
                 href={`/boutique?cat=${encodeURIComponent(activeCat.name)}`}
                 className={styles.overlayLink}
-                id={`cat-card-btn-${activeCat.slug}`}
+                id={`cat-card-btn-${activeCat.slug || activeCat.id || 'cat'}`}
               >
                 <div className={styles.overlayContent}>
                   <div className={styles.titleWrapper}>

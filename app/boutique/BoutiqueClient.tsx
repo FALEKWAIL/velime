@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSiteData } from '@/hooks/useSiteData';
 import ProductCard from '@/components/ProductCard/ProductCard';
@@ -10,6 +10,12 @@ export default function BoutiqueClient() {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get('cat') || 'Toutes';
   const [activeCategory, setActiveCategory] = useState(initialCat);
+
+  // Sync category state when URL search params change
+  useEffect(() => {
+    const cat = searchParams.get('cat');
+    setActiveCategory(cat || 'Toutes');
+  }, [searchParams]);
 
   // Combine 'Toutes' with dynamic category names (no mock fallback)
   const categoryNames = useMemo(() => {
