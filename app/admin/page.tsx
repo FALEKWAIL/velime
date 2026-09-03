@@ -615,7 +615,7 @@ ${itemsText}
      ============================================================ */
   const openNewProductModal = () => {
     setEditingProduct(null);
-    const defaultCat = categories.length > 0 ? categories[0].name : 'Robes';
+    const defaultCat = categories.length > 0 ? categories[0].name : '';
     const initSizes = ['S', 'M', 'L'];
     const initColors = ['Noir', 'Beige'];
 

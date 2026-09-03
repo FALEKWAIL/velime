@@ -117,9 +117,9 @@ export function useSiteData() {
     if (fromStorage) {
       notifyAll(fromStorage);
       setIsLoaded(true);
-    } else {
-      setIsLoaded(true);
     }
+    // If no localStorage data, DON'T set isLoaded yet — wait for Supabase to finish loading.
+    // loadSupabaseData() sets isLoaded=true in its finally block.
 
     // Cross-tab broadcast listener for instant sync
     let bc: BroadcastChannel | null = null;
@@ -160,6 +160,7 @@ export function useSiteData() {
   const loadSupabaseData = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       setIsSupabaseConnected(false);
+      setIsLoaded(true);
       return;
     }
     try {
@@ -175,29 +176,17 @@ export function useSiteData() {
 
         const currentLocal = memorySiteData;
 
-        // Merge: keep local items that haven't been pushed to Supabase yet
+        // Supabase is the authoritative source of truth.
+        // When it returns data, use it directly — don't re-merge stale local items
+        // that may have been deleted from the dashboard on another browser.
         let mergedProducts = currentLocal.products;
         if (Array.isArray(sbProducts)) {
-          if (sbProducts.length === 0 && currentLocal.products.length === 0) {
-            mergedProducts = [];
-          } else if (sbProducts.length > 0) {
-            const localOnly = currentLocal.products.filter(
-              (lp) => !sbProducts.some((sp) => sp.id === lp.id)
-            );
-            mergedProducts = [...sbProducts, ...localOnly];
-          }
+          mergedProducts = sbProducts;
         }
 
         let mergedCategories = currentLocal.categories;
         if (Array.isArray(sbCategories)) {
-          if (sbCategories.length === 0 && currentLocal.categories.length === 0) {
-            mergedCategories = [];
-          } else if (sbCategories.length > 0) {
-            const localOnlyCats = currentLocal.categories.filter(
-              (lc) => !sbCategories.some((sc) => sc.id === lc.id)
-            );
-            mergedCategories = [...sbCategories, ...localOnlyCats];
-          }
+          mergedCategories = sbCategories;
         }
 
         const isSbHeroCustom = sbSettings?.heroImage && sbSettings.heroImage !== '/images/hero-fabric.jpg';

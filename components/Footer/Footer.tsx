@@ -12,12 +12,7 @@ export default function Footer() {
     return null;
   }
 
-  const displayCategories = categories && categories.length > 0 ? categories : [
-    { id: '1', name: 'Robes', slug: 'robes' },
-    { id: '2', name: 'Ensembles', slug: 'ensembles' },
-    { id: '3', name: 'Chemises', slug: 'chemises' },
-    { id: '4', name: 'Manteaux', slug: 'manteaux' },
-  ];
+  const displayCategories = categories && categories.length > 0 ? categories : [];
 
   return (
     <footer className={styles.footer} id="footer">
