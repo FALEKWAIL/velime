@@ -87,7 +87,14 @@ function parseStoredData(): SiteData | null {
   return null;
 }
 
+// Check if cached data has real content (products or categories)
+function hasCachedContent(data: SiteData | null): boolean {
+  if (!data) return false;
+  return (data.products.length > 0 || data.categories.length > 0);
+}
+
 export function useSiteData() {
+  // Initialize from memory or localStorage cache SYNCHRONOUSLY for instant display
   const [data, setData] = useState<SiteData>(() => {
     if (memoryLoaded) return memorySiteData;
     const fromStorage = parseStoredData();
@@ -99,7 +106,12 @@ export function useSiteData() {
     return defaultSiteData;
   });
 
-  const [isLoaded, setIsLoaded] = useState(memoryLoaded);
+  // isLoaded = true immediately if we have cached data, false only for first-ever visit
+  const [isLoaded, setIsLoaded] = useState(() => {
+    if (memoryLoaded) return true;
+    const cached = parseStoredData();
+    return hasCachedContent(cached);
+  });
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -116,10 +128,11 @@ export function useSiteData() {
     const fromStorage = parseStoredData();
     if (fromStorage) {
       notifyAll(fromStorage);
-      setIsLoaded(true);
+      // If we have real content cached, mark loaded immediately for instant display
+      if (hasCachedContent(fromStorage)) {
+        setIsLoaded(true);
+      }
     }
-    // If no localStorage data, DON'T set isLoaded yet — wait for Supabase to finish loading.
-    // loadSupabaseData() sets isLoaded=true in its finally block.
 
     // Cross-tab broadcast listener for instant sync
     let bc: BroadcastChannel | null = null;
@@ -156,7 +169,7 @@ export function useSiteData() {
     };
   }, []);
 
-  // 2. Fetch latest data from Supabase in background
+  // 2. Fetch latest data from Supabase in background (silent refresh)
   const loadSupabaseData = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       setIsSupabaseConnected(false);
@@ -177,8 +190,6 @@ export function useSiteData() {
         const currentLocal = memorySiteData;
 
         // Supabase is the authoritative source of truth.
-        // When it returns data, use it directly — don't re-merge stale local items
-        // that may have been deleted from the dashboard on another browser.
         let mergedProducts = currentLocal.products;
         if (Array.isArray(sbProducts)) {
           mergedProducts = sbProducts;
@@ -204,6 +215,7 @@ export function useSiteData() {
           products: mergedProducts,
         };
 
+        // Cache the fresh Supabase data to localStorage for instant loading next time
         try {
           localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(merged));
           if (resolvedHeroImg) {
@@ -295,3 +307,4 @@ export function useSiteData() {
     reloadSupabase: loadSupabaseData,
   };
 }
+
