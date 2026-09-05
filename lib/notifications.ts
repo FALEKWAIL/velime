@@ -19,11 +19,25 @@ export interface ClientNotificationOrder {
 
 export const DEFAULT_NTFY_TOPIC = 'velime_orders_dz';
 
+// Deduplication cache to prevent duplicate alerts for the same order
+const recentlyNotifiedOrders = new Set<string>();
+
 export async function sendOrderNotification(
   order: Order | ClientNotificationOrder,
   customOrigin?: string
 ) {
   try {
+    const orderKey = (order as any).id || (order as any).orderNumber;
+    if (orderKey) {
+      if (recentlyNotifiedOrders.has(orderKey)) {
+        return; // Already notified, avoid duplicate
+      }
+      recentlyNotifiedOrders.add(orderKey);
+      setTimeout(() => {
+        recentlyNotifiedOrders.delete(orderKey);
+      }, 30000);
+    }
+
     const origin = customOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
     const topic = (
       process.env.NEXT_PUBLIC_NTFY_TOPIC ||
@@ -94,31 +108,36 @@ export async function sendOrderNotification(
       actions,
     };
 
-    const promises: Promise<any>[] = [];
+    let sent = false;
 
-    // 1. Server API Route (Primary & most reliable against client CORS/adblockers)
+    // 1. Primary: Server API Route (/api/notify)
     if (typeof window !== 'undefined') {
-      const apiRoutePromise = fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order, topic, origin }),
-      }).catch((err) => {
-        console.warn('Server notify error:', err);
-      });
-      promises.push(apiRoutePromise);
+      try {
+        const res = await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order, topic, origin }),
+        });
+        if (res.ok) {
+          sent = true;
+        }
+      } catch (err) {
+        console.warn('Server notify route error, falling back to direct ntfy:', err);
+      }
     }
 
-    // 2. Direct client-side fetch (Immediate fallback redundancy)
-    const clientPromise = fetch('https://ntfy.sh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ntfyPayload),
-    }).catch((err) => {
-      console.warn('Direct ntfy error:', err);
-    });
-    promises.push(clientPromise);
-
-    await Promise.allSettled(promises);
+    // 2. Fallback: Direct client-side fetch ONLY if server route failed
+    if (!sent) {
+      try {
+        await fetch('https://ntfy.sh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ntfyPayload),
+        });
+      } catch (err) {
+        console.warn('Direct ntfy error:', err);
+      }
+    }
   } catch (err) {
     console.warn('sendOrderNotification caught error:', err);
   }
