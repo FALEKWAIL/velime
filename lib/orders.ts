@@ -1,5 +1,6 @@
 import { Order, OrderStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { sendOrderNotification } from '@/lib/notifications';
 
 export const ORDERS_STORAGE_KEY = 'velime-orders-data';
 
@@ -69,6 +70,12 @@ export async function createOrder(orderPayload: Omit<Order, 'id' | 'orderNumber'
       console.warn('Supabase sync note:', err);
     }
   }
+
+  // 3. Dispatch real-time push notification via ntfy (dual redundancy)
+  const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
+  sendOrderNotification(newOrder, origin).catch((err) => {
+    console.warn('Order notification trigger note:', err);
+  });
 
   return newOrder;
 }

@@ -12,6 +12,7 @@ import {
 } from '@/data/products';
 import { useOrders } from '@/hooks/useOrders';
 import { deleteCategoryFromSupabase, deleteProductFromSupabase } from '@/lib/supabase';
+import { sendOrderNotification } from '@/lib/notifications';
 import styles from './admin.module.css';
 
 const ADMIN_PASSWORD = 'velime2024';
@@ -51,6 +52,48 @@ export default function AdminPage() {
   const [inspectingOrder, setInspectingOrder] = useState<Order | null>(null);
   const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
   const [copiedBordereau, setCopiedBordereau] = useState(false);
+  const [isTestingNotify, setIsTestingNotify] = useState(false);
+  const [notifyTestStatus, setNotifyTestStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleTestNotification = async () => {
+    setIsTestingNotify(true);
+    setNotifyTestStatus(null);
+    try {
+      await sendOrderNotification({
+        id: `TEST-${Math.floor(1000 + Math.random() * 9000)}`,
+        orderNumber: `CMD-TEST-${Math.floor(100 + Math.random() * 900)}`,
+        customerName: 'Client Test Velime',
+        customerPhone: '0550123456',
+        wilayaName: 'Alger',
+        commune: 'Centre',
+        deliveryType: 'domicile',
+        items: [
+          {
+            productName: 'Article Test Velime',
+            size: 'M',
+            color: 'Noir',
+            quantity: 1,
+            price: 8500,
+          },
+        ],
+        itemsSubtotal: 8500,
+        deliveryCost: 500,
+        totalAmount: 9000,
+        notes: 'Test de notification push en temps réel.',
+      });
+      setNotifyTestStatus({
+        type: 'success',
+        text: 'Alerte test envoyée avec succès sur le topic "velime_orders_dz" ! Votre téléphone doit sonner.',
+      });
+    } catch (err: any) {
+      setNotifyTestStatus({
+        type: 'error',
+        text: `Erreur d'envoi : ${err?.message || 'Erreur inconnue'}`,
+      });
+    } finally {
+      setIsTestingNotify(false);
+    }
+  };
 
   const handleCopyBordereau = (ord: Order) => {
     const itemsText = ord.items
@@ -1174,6 +1217,113 @@ ${itemsText}
                   </strong>
                   <span className={styles.statSub}>Commandes confirmées</span>
                 </div>
+              </div>
+
+              {/* Real-time Push Notification Status & Test (ntfy.sh) */}
+              <div style={{
+                margin: '1.25rem 0',
+                padding: '1.25rem 1.5rem',
+                background: '#ffffff',
+                border: '1px solid #e7e2d8',
+                borderRadius: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                boxShadow: '0 2px 8px rgba(78, 64, 52, 0.04)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      background: '#f4efe8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem',
+                      flexShrink: 0
+                    }}>
+                      🔔
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, color: '#2b221a' }}>
+                        Alertes Push Téléphone Instantanées (ntfy.sh)
+                      </h4>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#8c7864' }}>
+                        Canal : <strong style={{ color: '#2b221a', background: '#f5f2eb', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>velime_orders_dz</strong> • Priorité Urgente 4 (Sonnerie forte même écran verrouillé)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <a
+                      href="https://ntfy.sh/velime_orders_dz"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.5rem 0.9rem',
+                        fontSize: '0.8rem',
+                        border: '1px solid #d4ccbf',
+                        borderRadius: '4px',
+                        background: '#ffffff',
+                        color: '#4e4034',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
+                      }}
+                    >
+                      <span>Consulter sur ntfy.sh</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                    <button
+                      type="button"
+                      disabled={isTestingNotify}
+                      onClick={handleTestNotification}
+                      style={{
+                        padding: '0.5rem 1.1rem',
+                        fontSize: '0.8rem',
+                        border: 'none',
+                        borderRadius: '4px',
+                        background: '#2b221a',
+                        color: '#ffffff',
+                        cursor: isTestingNotify ? 'not-allowed' : 'pointer',
+                        fontWeight: 500,
+                        opacity: isTestingNotify ? 0.7 : 1,
+                        transition: 'background 0.2s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <span>{isTestingNotify ? 'Envoi du test...' : '🔊 Tester l\'alerte sur mon téléphone'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {notifyTestStatus && (
+                  <div style={{
+                    padding: '0.65rem 0.95rem',
+                    borderRadius: '4px',
+                    fontSize: '0.82rem',
+                    background: notifyTestStatus.type === 'success' ? '#f0fdf4' : '#fef2f2',
+                    color: notifyTestStatus.type === 'success' ? '#166534' : '#991b1b',
+                    border: `1px solid ${notifyTestStatus.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: '0.25rem'
+                  }}>
+                    <span>{notifyTestStatus.text}</span>
+                    <button
+                      type="button"
+                      onClick={() => setNotifyTestStatus(null)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem', padding: '0 4px' }}
+                    >✕</button>
+                  </div>
+                )}
               </div>
 
               {/* Filter Controls */}
