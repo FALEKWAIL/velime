@@ -15,7 +15,7 @@ import { deleteCategoryFromSupabase, deleteProductFromSupabase } from '@/lib/sup
 import { sendOrderNotification } from '@/lib/notifications';
 import styles from './admin.module.css';
 
-const ADMIN_PASSWORD = 'velime2024';
+const ADMIN_PASSWORD = 'velimerym';
 
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Taille Unique'];
 
@@ -989,7 +989,6 @@ ${itemsText}
               Accéder au Tableau de Bord
             </button>
           </form>
-          <p className={styles.loginHint}>Mot de passe par défaut : <strong>velime2024</strong></p>
         </div>
       </div>
     );
