@@ -15,8 +15,10 @@ import WhatsAppFAB from '@/components/WhatsAppFAB/WhatsAppFAB';
 import BackToTop from '@/components/BackToTop/BackToTop';
 import AdminSwitchBar from '@/components/AdminSwitchBar/AdminSwitchBar';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Incremental Static Regeneration (ISR)
+// Caches pages on Vercel's Edge CDN for 10 minutes (600s).
+// This serves visitors directly from the Edge cache with 0 Serverless Function invocations.
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: 'Velime — Mode Femme Élégante',
