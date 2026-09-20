@@ -1,6 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { Product, Category } from '@/types';
-import { SiteData } from '@/hooks/useSiteData';
+
+// Inline interface to avoid circular import:
+// lib/supabase → hooks/useSiteData → context/SiteDataContext → lib/supabase
+interface SiteData {
+  heroTitle: string;
+  heroSubtitle: string;
+  heroCtaText: string;
+  heroImage: string;
+  products: Product[];
+  categories: Category[];
+  brands: string[];
+  lookbookPhotos?: string[];
+}
 
 const DEFAULT_SUPABASE_URL = 'https://mrgekwriowpksuwnkgto.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
@@ -191,6 +203,50 @@ export async function saveProductToSupabase(product: Product): Promise<boolean> 
     return true;
   } catch (err) {
     console.error('Supabase saveProduct exception:', err);
+    return false;
+  }
+}
+
+export async function updateProductStockInSupabase(
+  productId: string,
+  stockStatus: Product['stockStatus'],
+  inStock: boolean,
+  badge?: string,
+  stockMatrix?: any[],
+  availableSizes?: string[],
+  availableColors?: string[]
+): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const payload: any = {
+      stock_status: stockStatus,
+      in_stock: inStock,
+      badge: badge ?? null,
+      updated_at: new Date().toISOString(),
+    };
+    if (stockMatrix !== undefined) payload.stock_matrix = stockMatrix;
+    if (availableSizes !== undefined) payload.available_sizes = availableSizes;
+    if (availableColors !== undefined) payload.available_colors = availableColors;
+
+    let { error } = await supabase
+      .from('products')
+      .update(payload)
+      .eq('id', productId);
+
+    // Fallback if stock_matrix column is missing
+    if (error && error.message?.includes('stock_matrix')) {
+      delete payload.stock_matrix;
+      const retry = await supabase.from('products').update(payload).eq('id', productId);
+      error = retry.error;
+    }
+
+    if (error) {
+      console.error('Supabase updateProductStock error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase updateProductStock exception:', err);
     return false;
   }
 }
