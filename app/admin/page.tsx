@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Product, Category, StockStatus, StockVariant, Order, OrderItem, OrderStatus } from '@/types';
-import { useSiteData, defaultSiteData, HERO_IMAGE_KEY } from '@/hooks/useSiteData';
+import { useSiteData, defaultSiteData, HERO_IMAGE_KEY } from '@/context/SiteDataContext';
 import {
   formatPrice,
   COLOR_PALETTE,
