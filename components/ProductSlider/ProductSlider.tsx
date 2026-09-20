@@ -43,7 +43,11 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
 
   const allProducts = dynamicProducts ?? [];
   const bestSellers = allProducts.filter((p) => p.isBestSeller);
-  const displayProducts = bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 8);
+  // Prioritize best sellers, then complete with other products up to 8 so the 4-column row is full and visually balanced
+  const otherProducts = allProducts.filter((p) => !p.isBestSeller);
+  const displayProducts = bestSellers.length >= 4
+    ? bestSellers
+    : [...bestSellers, ...otherProducts].slice(0, 8);
 
   const totalPages = Math.max(1, Math.ceil(displayProducts.length / itemsPerPage));
 
@@ -98,7 +102,7 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
   return (
     <section className={styles.section} id="meilleure-vente">
       {/* Section Title */}
-      <div className={styles.header}>
+      <div ref={header.ref} className={styles.header}>
         <h2
           className={`${styles.title} reveal ${header.visible ? 'visible' : ''}`}
           style={{ transitionDelay: '0.1s' }}
