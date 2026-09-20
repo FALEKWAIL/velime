@@ -30,6 +30,8 @@ export default function AdminPage() {
     brands,
     lookbookPhotos,
     saveData,
+    updateStock,
+    saveSingleProduct,
   } = useSiteData();
 
   const { orders, updateStatus, removeOrder } = useOrders();
@@ -125,6 +127,7 @@ ${itemsText}
   const [stockModalProduct, setStockModalProduct] = useState<Product | null>(null);
   const [quickStockStatus, setQuickStockStatus] = useState<StockStatus>('in_stock');
   const [quickStockMatrix, setQuickStockMatrix] = useState<StockVariant[]>([]);
+  const [isSavingStock, setIsSavingStock] = useState(false);
 
   const openStockModal = (p: Product) => {
     setStockModalProduct(p);
@@ -159,53 +162,70 @@ ${itemsText}
     );
   };
 
-  const handleSaveQuickStock = () => {
-    if (!stockModalProduct) return;
-    const computedStatus =
-      quickStockStatus === 'partial_out'
-        ? computeStockStatusFromMatrix(quickStockMatrix)
-        : quickStockStatus;
-    const isInStock = computedStatus !== 'total_out';
+  const handleSaveQuickStock = async () => {
+    if (!stockModalProduct || isSavingStock) return;
+    setIsSavingStock(true);
 
-    const updated = products.map((p) => {
-      if (p.id !== stockModalProduct.id) return p;
-      return {
-        ...p,
-        stockStatus: computedStatus,
-        inStock: isInStock,
-        stockMatrix: quickStockMatrix,
-        badge:
-          computedStatus === 'total_out'
-            ? 'Rupture de Stock'
-            : computedStatus === 'partial_out'
-            ? 'Stock Limité'
-            : p.badge === 'Rupture de Stock' || p.badge === 'Stock Limité'
-            ? undefined
-            : p.badge,
-      };
-    });
+    try {
+      const computedStatus =
+        quickStockStatus === 'partial_out'
+          ? computeStockStatusFromMatrix(quickStockMatrix)
+          : quickStockStatus;
+      const isInStock = computedStatus !== 'total_out';
 
-    saveData({
-      heroTitle,
-      heroSubtitle,
-      heroCtaText,
-      heroImage,
-      categories,
-      products: updated,
-      brands,
-      lookbookPhotos: lookbookList,
-    });
+      const finalAvailableSizes =
+        computedStatus === 'total_out'
+          ? []
+          : (stockModalProduct.sizes || ['S', 'M', 'L']).filter((sz) =>
+              quickStockMatrix.some((m) => m.size === sz && m.inStock)
+            );
 
-    showNotification(
-      `Disponibilité de « ${stockModalProduct.name} » mise à jour (${
-        computedStatus === 'in_stock'
-          ? 'En Stock'
+      const finalAvailableColors =
+        computedStatus === 'total_out'
+          ? []
+          : (stockModalProduct.colors || []).filter((col) =>
+              quickStockMatrix.some((m) => (m.color || 'Standard') === col && m.inStock)
+            );
+
+      const finalBadge =
+        computedStatus === 'total_out'
+          ? 'Rupture de Stock'
           : computedStatus === 'partial_out'
-          ? 'Rupture Partielle'
-          : 'Rupture Totale'
-      }).`
-    );
-    setStockModalProduct(null);
+          ? 'Stock Limité'
+          : stockModalProduct.badge === 'Rupture de Stock' || stockModalProduct.badge === 'Stock Limité'
+          ? undefined
+          : stockModalProduct.badge;
+
+      const success = await updateStock(
+        stockModalProduct.id,
+        computedStatus,
+        isInStock,
+        finalBadge,
+        quickStockMatrix,
+        finalAvailableSizes,
+        finalAvailableColors
+      );
+
+      if (success) {
+        showNotification(
+          `Disponibilité de « ${stockModalProduct.name} » mise à jour avec succès (${
+            computedStatus === 'in_stock'
+              ? 'En Stock'
+              : computedStatus === 'partial_out'
+              ? 'Rupture Partielle'
+              : 'Rupture Totale'
+          }).`
+        );
+        setStockModalProduct(null);
+      } else {
+        showNotification('Attention : la mise à jour a échoué. Vérifiez la connexion Supabase.');
+      }
+    } catch (err: any) {
+      console.error('Save quick stock error:', err);
+      showNotification('Erreur lors de la mise à jour du stock.');
+    } finally {
+      setIsSavingStock(false);
+    }
   };
 
   // Modal states for Product
@@ -721,7 +741,7 @@ ${itemsText}
     setIsProductModalOpen(true);
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodForm.name.trim()) return;
 
@@ -775,23 +795,10 @@ ${itemsText}
     };
 
     if (editingProduct) {
-      const updatedProducts = products.map((p) => (p.id === editingProduct.id ? productPayload : p));
-      saveData({
-        heroTitle, heroSubtitle, heroCtaText, heroImage,
-        categories,
-        products: updatedProducts,
-        brands,
-        lookbookPhotos: lookbookList,
-      });
+      await saveSingleProduct(productPayload);
       showNotification(`Article « ${prodForm.name} » mis à jour.`);
     } else {
-      saveData({
-        heroTitle, heroSubtitle, heroCtaText, heroImage,
-        categories,
-        products: [productPayload, ...products],
-        brands,
-        lookbookPhotos: lookbookList,
-      });
+      await saveSingleProduct(productPayload);
       showNotification(`Article « ${prodForm.name} » créé avec succès.`);
     }
 
@@ -812,27 +819,26 @@ ${itemsText}
     showNotification(`Article « ${productName} » supprimé.`);
   };
 
-  const handleToggleStockQuick = (productId: string, currentStatus: StockStatus) => {
+  const handleToggleStockQuick = async (productId: string, currentStatus: StockStatus) => {
     const nextStatus: StockStatus = currentStatus === 'in_stock' ? 'partial_out' : currentStatus === 'partial_out' ? 'total_out' : 'in_stock';
-    const updatedProducts = products.map((p) => {
-      if (p.id !== productId) return p;
-      return {
-        ...p,
-        stockStatus: nextStatus,
-        inStock: nextStatus !== 'total_out',
-        badge: nextStatus === 'total_out' ? 'Rupture de Stock' : nextStatus === 'partial_out' ? 'Stock Limité' : undefined,
-        availableSizes: nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? p.sizes.slice(0, 1) : p.sizes),
-        availableColors: nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? (p.colors?.slice(0, 1) || []) : (p.colors || [])),
-      };
-    });
-    saveData({
-      heroTitle, heroSubtitle, heroCtaText, heroImage,
-      categories,
-      products: updatedProducts,
-      brands,
-      lookbookPhotos: lookbookList,
-    });
-    showNotification('Statut de stock mis à jour.');
+    const prod = products.find((p) => p.id === productId);
+    if (!prod) return;
+
+    const isInStock = nextStatus !== 'total_out';
+    const finalBadge = nextStatus === 'total_out' ? 'Rupture de Stock' : nextStatus === 'partial_out' ? 'Stock Limité' : undefined;
+    const finalSizes = nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? prod.sizes.slice(0, 1) : prod.sizes);
+    const finalColors = nextStatus === 'total_out' ? [] : (nextStatus === 'partial_out' ? (prod.colors?.slice(0, 1) || []) : (prod.colors || []));
+
+    await updateStock(
+      productId,
+      nextStatus,
+      isInStock,
+      finalBadge,
+      undefined,
+      finalSizes,
+      finalColors
+    );
+    showNotification(`Statut de « ${prod.name} » mis à jour.`);
   };
 
   /* Helper methods for custom sizes & colors in modal */
@@ -2500,9 +2506,11 @@ ${itemsText}
               <button
                 type="button"
                 onClick={handleSaveQuickStock}
+                disabled={isSavingStock}
                 className={styles.stockModalSaveBtn}
+                style={isSavingStock ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}
               >
-                💾 Enregistrer le Stock
+                {isSavingStock ? '⏳ Enregistrement...' : '💾 Enregistrer le Stock'}
               </button>
             </div>
           </div>
