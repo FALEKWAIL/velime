@@ -8,6 +8,8 @@ import {
   fetchCategoriesFromSupabase,
   fetchSiteSettingsFromSupabase,
   syncAllToSupabase,
+  updateProductStockInSupabase,
+  saveProductToSupabase,
 } from '@/lib/supabase';
 
 export const ADMIN_STORAGE_KEY = 'velime-admin-data';
@@ -53,6 +55,16 @@ export interface SiteDataContextType extends SiteData {
   isSyncing: boolean;
   setData: React.Dispatch<React.SetStateAction<SiteData>>;
   saveData: (newData: SiteData) => void;
+  updateStock: (
+    productId: string,
+    stockStatus: Product['stockStatus'],
+    inStock: boolean,
+    badge?: string,
+    stockMatrix?: any[],
+    availableSizes?: string[],
+    availableColors?: string[]
+  ) => Promise<boolean>;
+  saveSingleProduct: (product: Product) => Promise<boolean>;
   triggerSupabaseSync: () => Promise<{ success: boolean; message?: string }>;
   reloadSupabase: () => Promise<void>;
 }
@@ -158,6 +170,103 @@ export function SiteDataProvider({
     };
   }, []);
 
+  // Direct, fast, single-product stock update (less than 1KB payload, never times out)
+  const updateStock = useCallback(
+    async (
+      productId: string,
+      stockStatus: Product['stockStatus'],
+      inStock: boolean,
+      badge?: string,
+      stockMatrix?: any[],
+      availableSizes?: string[],
+      availableColors?: string[]
+    ): Promise<boolean> => {
+      // 1. Optimistic instant state update
+      setData((prev) => {
+        const updatedProducts = prev.products.map((p) => {
+          if (p.id !== productId) return p;
+          return {
+            ...p,
+            stockStatus,
+            inStock,
+            badge: badge !== undefined ? badge : (stockStatus === 'total_out' ? 'Rupture de Stock' : stockStatus === 'partial_out' ? 'Stock Limité' : undefined),
+            stockMatrix: stockMatrix !== undefined ? stockMatrix : p.stockMatrix,
+            availableSizes: availableSizes !== undefined ? availableSizes : p.availableSizes,
+            availableColors: availableColors !== undefined ? availableColors : p.availableColors,
+          };
+        });
+
+        const updatedData = { ...prev, products: updatedProducts };
+
+        try {
+          if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+            const bc = new BroadcastChannel('velime_sync_channel');
+            bc.postMessage({ type: 'SYNC', payload: updatedData });
+            bc.close();
+          }
+        } catch {}
+
+        return updatedData;
+      });
+
+      // 2. Direct database update
+      let ok = true;
+      if (isSupabaseConfigured()) {
+        ok = await updateProductStockInSupabase(
+          productId,
+          stockStatus,
+          inStock,
+          badge,
+          stockMatrix,
+          availableSizes,
+          availableColors
+        );
+        if (ok) setIsSupabaseConnected(true);
+      }
+
+      // 3. Purge Vercel Edge cache so public site shows changes immediately
+      try {
+        fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
+      } catch {}
+
+      return ok;
+    },
+    []
+  );
+
+  // Direct, fast, single-product update (for product edit modal)
+  const saveSingleProduct = useCallback(async (product: Product): Promise<boolean> => {
+    setData((prev) => {
+      const exists = prev.products.some((p) => p.id === product.id);
+      const updatedProducts = exists
+        ? prev.products.map((p) => (p.id === product.id ? product : p))
+        : [product, ...prev.products];
+      const updatedData = { ...prev, products: updatedProducts };
+
+      try {
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('velime_sync_channel');
+          bc.postMessage({ type: 'SYNC', payload: updatedData });
+          bc.close();
+        }
+      } catch {}
+
+      return updatedData;
+    });
+
+    let ok = true;
+    if (isSupabaseConfigured()) {
+      ok = await saveProductToSupabase(product);
+      if (ok) setIsSupabaseConnected(true);
+    }
+
+    try {
+      fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
+    } catch {}
+
+    return ok;
+  }, []);
+
   // Save changes (from Admin Dashboard): updates state, broadcasts to tabs, pushes directly to Supabase.
   // NO LOCAL STORAGE SAVED FOR PRODUCTS/CATEGORIES! (Only cart uses localStorage)
   const saveData = useCallback((newData: SiteData) => {
@@ -180,6 +289,10 @@ export function SiteDataProvider({
           console.warn('Background Supabase save error:', err);
         });
     }
+
+    try {
+      fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
+    } catch {}
   }, []);
 
   const triggerSupabaseSync = useCallback(async () => {
@@ -206,6 +319,8 @@ export function SiteDataProvider({
         isSyncing,
         setData,
         saveData,
+        updateStock,
+        saveSingleProduct,
         triggerSupabaseSync,
         reloadSupabase: loadSupabaseData,
       }}
