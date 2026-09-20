@@ -9,7 +9,8 @@ export async function POST() {
     revalidatePath('/boutique');
     revalidatePath('/produit/[slug]', 'page');
     return NextResponse.json({ revalidated: true, now: Date.now() });
-  } catch (err: any) {
-    return NextResponse.json({ revalidated: false, error: err?.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ revalidated: false, error: message }, { status: 500 });
   }
 }
