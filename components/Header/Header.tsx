@@ -19,15 +19,16 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

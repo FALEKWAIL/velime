@@ -45,8 +45,6 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
   const bestSellers = allProducts.filter((p) => p.isBestSeller);
   const displayProducts = bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 8);
 
-  if (displayProducts.length === 0) return null;
-
   const totalPages = Math.max(1, Math.ceil(displayProducts.length / itemsPerPage));
 
   useEffect(() => {
@@ -72,6 +70,9 @@ export default function ProductSlider({ products: initialProducts, title = 'Meil
     const clamped = Math.max(0, Math.min(displayProducts.length - 1, idx));
     setActiveMobileIndex(clamped);
   }, [displayProducts.length]);
+
+  // Early return after all hooks
+  if (displayProducts.length === 0) return null;
 
   const scrollToItem = (index: number) => {
     if (!trackRef.current) return;

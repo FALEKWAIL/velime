@@ -18,12 +18,9 @@ export default function NewArrivalsSlider({ products: initialProducts }: Props) 
   const trackRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get the 6 latest products
   const allProducts = dynamicProducts ?? [];
   const newProducts = allProducts.slice(0, 6);
   const totalItems = newProducts.length;
-
-  if (totalItems === 0) return null;
 
   // Scroll to specific product index
   const scrollToIndex = useCallback((index: number) => {
@@ -73,6 +70,9 @@ export default function NewArrivalsSlider({ products: initialProducts }: Props) 
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
     };
   }, [isPaused, totalItems, scrollToIndex]);
+
+  // Early return after all hooks
+  if (totalItems === 0) return null;
 
   return (
     <section
