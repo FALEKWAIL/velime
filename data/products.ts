@@ -117,200 +117,11 @@ export function computeStockStatusFromMatrix(matrix: StockVariant[]): StockStatu
   return 'partial_out';
 }
 
-export const defaultCategories: Category[] = [
-  { id: 'cat-1', name: 'Robes', slug: 'robes', description: 'Robes élégantes pour toutes les occasions', image: '/images/p1.jpg' },
-  { id: 'cat-2', name: 'Chemises', slug: 'chemises', description: 'Chemises et blouses chic', image: '/images/p3.jpg' },
-  { id: 'cat-3', name: 'Ensembles', slug: 'ensembles', description: 'Ensembles deux pièces sophistiqués', image: '/images/p4.jpg' },
-  { id: 'cat-4', name: 'Combinaisons', slug: 'combinaisons', description: 'Combinaisons modernes et raffinées', image: '/images/p7.jpg' },
-  { id: 'cat-5', name: 'Manteaux', slug: 'manteaux', description: 'Manteaux chauds et vestes structurées', image: '/images/p5.jpg' },
-];
+export const defaultCategories: Category[] = [];
 
-export const products: Product[] = [
-  {
-    id: '1',
-    slug: 'robe-noire-satin',
-    name: 'Robe Noire Satin',
-    price: 7800,
-    image: '/images/p1.jpg',
-    images: ['/images/p1.jpg', '/images/p4.jpg'],
-    category: 'Robes',
-    description: 'Une robe en satin noir élégante et intemporelle, parfaite pour toutes les occasions. Coupe midi avec manches longues et décolleté en V.',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    availableSizes: ['XS', 'S', 'M', 'L', 'XL'],
-    colors: ['Noir', 'Bordeaux', 'Beige'],
-    availableColors: ['Noir', 'Bordeaux', 'Beige'],
-    stockMatrix: generateDefaultStockMatrix(['XS', 'S', 'M', 'L', 'XL'], ['Noir', 'Bordeaux', 'Beige'], true),
-    inStock: true,
-    stockStatus: 'in_stock',
-    isBestSeller: true,
-    isNew: false,
-  },
-  {
-    id: '2',
-    slug: 'robe-florale-jaune',
-    name: 'Robe Florale Jaune',
-    price: 6500,
-    image: '/images/p2.jpg',
-    images: ['/images/p2.jpg', '/images/p6.jpg'],
-    category: 'Robes',
-    description: 'Magnifique robe maxi à fleurs avec des manches bouffantes. Légère et féminine, idéale pour les journées ensoleillées.',
-    sizes: ['XS', 'S', 'M', 'L'],
-    availableSizes: ['S', 'M'],
-    colors: ['Jaune Pastel', 'Blanc', 'Rose Poudré'],
-    availableColors: ['Jaune Pastel', 'Blanc'],
-    stockMatrix: [
-      { size: 'XS', color: 'Jaune Pastel', inStock: false },
-      { size: 'S', color: 'Jaune Pastel', inStock: true },
-      { size: 'M', color: 'Jaune Pastel', inStock: true },
-      { size: 'L', color: 'Jaune Pastel', inStock: false },
-      { size: 'XS', color: 'Blanc', inStock: false },
-      { size: 'S', color: 'Blanc', inStock: true },
-      { size: 'M', color: 'Blanc', inStock: false },
-      { size: 'L', color: 'Blanc', inStock: false },
-      { size: 'XS', color: 'Rose Poudré', inStock: false },
-      { size: 'S', color: 'Rose Poudré', inStock: false },
-      { size: 'M', color: 'Rose Poudré', inStock: false },
-      { size: 'L', color: 'Rose Poudré', inStock: false },
-    ],
-    inStock: true,
-    stockStatus: 'partial_out',
-    badge: 'Stock Limité',
-    isBestSeller: true,
-    isNew: true,
-  },
-  {
-    id: '3',
-    slug: 'chemise-imprimee-loov',
-    name: 'Chemise Imprimée Loov',
-    price: 4800,
-    image: '/images/p3.jpg',
-    images: ['/images/p3.jpg', '/images/p5.jpg'],
-    category: 'Chemises',
-    description: 'Chemise bohème aux tons chauds avec des imprimés abstraits. Ample et confortable, parfaite pour un look décontracté chic.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    availableSizes: [],
-    colors: ['Camel', 'Ivoire'],
-    availableColors: [],
-    stockMatrix: generateDefaultStockMatrix(['S', 'M', 'L', 'XL'], ['Camel', 'Ivoire'], false),
-    inStock: false,
-    stockStatus: 'total_out',
-    badge: 'Rupture de Stock',
-    isBestSeller: true,
-    isNew: false,
-  },
-  {
-    id: '4',
-    slug: 'ensemble-dalida',
-    name: 'Ensemble Dalida',
-    price: 8200,
-    image: '/images/p4.jpg',
-    images: ['/images/p4.jpg', '/images/p1.jpg'],
-    category: 'Ensembles',
-    description: 'Ensemble deux pièces en lin ivoire — haut relaxé et pantalon large. Un look épuré et sophistiqué pour toutes les saisons.',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    availableSizes: ['XS', 'S', 'M', 'L', 'XL'],
-    colors: ['Ivoire', 'Noir'],
-    availableColors: ['Ivoire', 'Noir'],
-    stockMatrix: generateDefaultStockMatrix(['XS', 'S', 'M', 'L', 'XL'], ['Ivoire', 'Noir'], true),
-    inStock: true,
-    stockStatus: 'in_stock',
-    isBestSeller: true,
-    isNew: false,
-  },
-  {
-    id: '5',
-    slug: 'manteau-mocha',
-    name: 'Manteau Mocha',
-    price: 14500,
-    image: '/images/p5.jpg',
-    images: ['/images/p5.jpg', '/images/p3.jpg'],
-    category: 'Manteaux',
-    description: 'Long manteau en laine mocha — coupe droite classique et raffinée. Un investissement mode pour votre garde-robe hivernale.',
-    sizes: ['XS', 'S', 'M', 'L'],
-    availableSizes: ['XS', 'S', 'M', 'L'],
-    colors: ['Mocha', 'Noir', 'Camel'],
-    availableColors: ['Mocha', 'Noir', 'Camel'],
-    stockMatrix: generateDefaultStockMatrix(['XS', 'S', 'M', 'L'], ['Mocha', 'Noir', 'Camel'], true),
-    inStock: true,
-    stockStatus: 'in_stock',
-    isBestSeller: false,
-    isNew: true,
-  },
-  {
-    id: '6',
-    slug: 'ensemble-lin-beige',
-    name: 'Ensemble Lin Beige',
-    price: 9800,
-    image: '/images/p6.jpg',
-    images: ['/images/p6.jpg', '/images/p4.jpg'],
-    category: 'Ensembles',
-    description: 'Ensemble blazer et pantalon en lin beige naturel. Style parisien par excellence, alliant confort et élégance.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    availableSizes: ['M', 'L'],
-    colors: ['Beige', 'Blanc', 'Sauge'],
-    availableColors: ['Beige', 'Sauge'],
-    stockMatrix: [
-      { size: 'S', color: 'Beige', inStock: false },
-      { size: 'M', color: 'Beige', inStock: true },
-      { size: 'L', color: 'Beige', inStock: true },
-      { size: 'XL', color: 'Beige', inStock: false },
-      { size: 'S', color: 'Blanc', inStock: false },
-      { size: 'M', color: 'Blanc', inStock: false },
-      { size: 'L', color: 'Blanc', inStock: false },
-      { size: 'XL', color: 'Blanc', inStock: false },
-      { size: 'S', color: 'Sauge', inStock: true },
-      { size: 'M', color: 'Sauge', inStock: true },
-      { size: 'L', color: 'Sauge', inStock: false },
-      { size: 'XL', color: 'Sauge', inStock: false },
-    ],
-    inStock: true,
-    stockStatus: 'partial_out',
-    badge: 'Stock Limité',
-    isBestSeller: true,
-    isNew: false,
-  },
-  {
-    id: '7',
-    slug: 'combinaison-sauge',
-    name: 'Combinaison Sauge',
-    price: 7200,
-    image: '/images/p7.jpg',
-    images: ['/images/p7.jpg', '/images/p1.jpg'],
-    category: 'Combinaisons',
-    description: 'Combinaison large en sauge doux avec ceinture assortie. Chic et polyvalente, pour un look tout-en-un impeccable.',
-    sizes: ['XS', 'S', 'M', 'L'],
-    availableSizes: ['XS', 'S', 'M', 'L'],
-    colors: ['Sauge', 'Noir', 'Terracotta'],
-    availableColors: ['Sauge', 'Noir', 'Terracotta'],
-    stockMatrix: generateDefaultStockMatrix(['XS', 'S', 'M', 'L'], ['Sauge', 'Noir', 'Terracotta'], true),
-    inStock: true,
-    stockStatus: 'in_stock',
-    isBestSeller: false,
-    isNew: true,
-  },
-  {
-    id: '8',
-    slug: 'blouse-soie-sauge',
-    name: 'Blouse Soie Sauge',
-    price: 5500,
-    originalPrice: 6800,
-    image: '/images/hero.jpg',
-    images: ['/images/hero.jpg', '/images/p3.jpg'],
-    category: 'Chemises',
-    description: 'Blouse en soie sauge à col drapé — légère et luxueuse. La pièce parfaite pour sublimer votre quotidien.',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    availableSizes: ['XS', 'S', 'M', 'L', 'XL'],
-    colors: ['Sauge', 'Ivoire', 'Rose Poudré'],
-    availableColors: ['Sauge', 'Ivoire', 'Rose Poudré'],
-    stockMatrix: generateDefaultStockMatrix(['XS', 'S', 'M', 'L', 'XL'], ['Sauge', 'Ivoire', 'Rose Poudré'], true),
-    inStock: true,
-    stockStatus: 'in_stock',
-    isBestSeller: true,
-    isNew: false,
-  },
-];
+export const products: Product[] = [];
 
-export const categories = ['Toutes', ...defaultCategories.map((c) => c.name)];
+export const categories = ['Toutes'];
 
 export const formatPrice = (price: any): string => {
   const num = Number(price);
@@ -320,13 +131,11 @@ export const formatPrice = (price: any): string => {
   return num.toLocaleString('de-DE') + ',00 د.ج';
 };
 
-export const getBestSellers = (): Product[] =>
-  products.filter((p) => p.isBestSeller);
+export const getBestSellers = (): Product[] => [];
 
-export const getNewArrivals = (): Product[] =>
-  products.filter((p) => p.isNew);
+export const getNewArrivals = (): Product[] => [];
 
-export const getProductBySlug = (slug: string): Product | undefined =>
-  products.find((p) => p.slug === slug);
+export const getProductBySlug = (_slug: string): Product | undefined => undefined;
+
 
 

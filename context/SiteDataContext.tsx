@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Product, Category } from '@/types';
-import { products as defaultProducts, defaultCategories } from '@/data/products';
 import {
   isSupabaseConfigured,
   fetchProductsFromSupabase,
@@ -33,8 +32,8 @@ export const defaultSiteData: SiteData = {
   heroSubtitle: 'Une allure , toujours',
   heroCtaText: 'Découvrir',
   heroImage: '/images/hero-custom.jpg',
-  products: defaultProducts,
-  categories: defaultCategories,
+  products: [],
+  categories: [],
   brands: [
     'ZARA', 'MANGO', 'SANDRO', 'MASSIMO DUTTI', 'COS', 'BA&SH',
     '& OTHER STORIES', 'ARKET', 'JACQUEMUS', 'ROUJE', 'SÉZANE', 'IRO PARIS'
@@ -53,7 +52,7 @@ export const defaultSiteData: SiteData = {
 function getLocalCache(): Partial<SiteData> | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(SITE_CACHE_KEY);
+    const raw = localStorage.getItem(SITE_CACHE_KEY) || localStorage.getItem(ADMIN_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
@@ -118,12 +117,12 @@ export function SiteDataProvider({
         ...cached,
       };
     }
-    // 3. Fallback to resilient default catalog
+    // 3. Fallback to empty real catalog (NO mock products)
     return {
       ...defaultSiteData,
       ...initialData,
-      products: defaultProducts,
-      categories: defaultCategories,
+      products: [],
+      categories: [],
     };
   });
 
