@@ -46,8 +46,8 @@ export default async function RootLayout({
     ]);
 
     initialData = {
-      products: products || [],
-      categories: categories || [],
+      ...(products && products.length > 0 ? { products } : {}),
+      ...(categories && categories.length > 0 ? { categories } : {}),
       heroTitle: settings?.heroTitle,
       heroSubtitle: settings?.heroSubtitle,
       heroCtaText: settings?.heroCtaText,

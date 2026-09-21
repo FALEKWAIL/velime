@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Product, Category } from '@/types';
+import { products as defaultProducts, defaultCategories } from '@/data/products';
 import {
   isSupabaseConfigured,
   fetchProductsFromSupabase,
@@ -14,6 +15,7 @@ import {
 
 export const ADMIN_STORAGE_KEY = 'velime-admin-data';
 export const HERO_IMAGE_KEY = 'velime-hero-image';
+export const SITE_CACHE_KEY = 'velime-site-data-cache';
 
 export interface SiteData {
   heroTitle: string;
@@ -31,8 +33,8 @@ export const defaultSiteData: SiteData = {
   heroSubtitle: 'Une allure , toujours',
   heroCtaText: 'Découvrir',
   heroImage: '/images/hero-custom.jpg',
-  products: [],
-  categories: [],
+  products: defaultProducts,
+  categories: defaultCategories,
   brands: [
     'ZARA', 'MANGO', 'SANDRO', 'MASSIMO DUTTI', 'COS', 'BA&SH',
     '& OTHER STORIES', 'ARKET', 'JACQUEMUS', 'ROUJE', 'SÉZANE', 'IRO PARIS'
@@ -47,6 +49,28 @@ export const defaultSiteData: SiteData = {
     '/images/p7.jpg',
   ],
 };
+
+function getLocalCache(): Partial<SiteData> | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(SITE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function saveLocalCache(newData: SiteData) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SITE_CACHE_KEY, JSON.stringify(newData));
+  } catch {}
+}
+
+let lastFetchTime = 0;
 
 export interface SiteDataContextType extends SiteData {
   isLoaded: boolean;
@@ -78,42 +102,62 @@ export function SiteDataProvider({
   children: React.ReactNode;
   initialData?: Partial<SiteData>;
 }) {
-  const [data, setData] = useState<SiteData>(() => ({
-    ...defaultSiteData,
-    ...initialData,
-    products: initialData?.products && Array.isArray(initialData.products) ? initialData.products : [],
-    categories: initialData?.categories && Array.isArray(initialData.categories) ? initialData.categories : [],
-  }));
-
-  const [isLoaded, setIsLoaded] = useState<boolean>(() => {
-    return Boolean(
-      (initialData?.products && initialData.products.length > 0) ||
-      (initialData?.categories && initialData.categories.length > 0)
-    );
+  const [data, setData] = useState<SiteData>(() => {
+    // 1. Prioritize initialData if provided and non-empty
+    if (initialData?.products && Array.isArray(initialData.products) && initialData.products.length > 0) {
+      return {
+        ...defaultSiteData,
+        ...initialData,
+      };
+    }
+    // 2. Client-side persistent cache fallback
+    const cached = getLocalCache();
+    if (cached?.products && cached.products.length > 0) {
+      return {
+        ...defaultSiteData,
+        ...cached,
+      };
+    }
+    // 3. Fallback to resilient default catalog
+    return {
+      ...defaultSiteData,
+      ...initialData,
+      products: defaultProducts,
+      categories: defaultCategories,
+    };
   });
 
+  const [isLoaded, setIsLoaded] = useState<boolean>(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(isSupabaseConfigured());
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // CRITICAL USER DIRECTIVE:
-  // "je veux loption de local storage only in mon panier"
-  // Completely clear and purge any stale cached site/product data from the user's phone localStorage
+  // Client hydration: read from local cache if initial render was from SSR fallback
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(ADMIN_STORAGE_KEY);
-        localStorage.removeItem(HERO_IMAGE_KEY);
-      }
-    } catch {}
+    const cached = getLocalCache();
+    if (cached && cached.products && cached.products.length > 0) {
+      setData((prev) => {
+        if (!prev.products || prev.products.length === 0) {
+          return { ...prev, ...cached };
+        }
+        return prev;
+      });
+    }
   }, []);
 
-  // Background refresh from Supabase (keeps client data always fresh)
-  const loadSupabaseData = useCallback(async () => {
+  // Background refresh from Supabase (keeps client data always fresh, throttled to prevent quota exhaustion)
+  const loadSupabaseData = useCallback(async (force = false) => {
     if (!isSupabaseConfigured()) {
       setIsSupabaseConnected(false);
       setIsLoaded(true);
       return;
     }
+
+    // Throttle: don't re-query Supabase more than once every 10 minutes unless forced
+    const now = Date.now();
+    if (!force && lastFetchTime > 0 && now - lastFetchTime < 10 * 60 * 1000) {
+      return;
+    }
+
     try {
       setIsSyncing(true);
       const [sbProducts, sbCategories, sbSettings] = await Promise.all([
@@ -122,22 +166,27 @@ export function SiteDataProvider({
         fetchSiteSettingsFromSupabase(),
       ]);
 
-      if (sbProducts !== null || sbCategories !== null || sbSettings !== null) {
+      if (sbProducts !== null && Array.isArray(sbProducts) && sbProducts.length > 0) {
+        lastFetchTime = Date.now();
         setIsSupabaseConnected(true);
 
         setData((prev) => {
           const resolvedHeroImg = sbSettings?.heroImage || prev.heroImage || defaultSiteData.heroImage;
-          return {
+          const updated: SiteData = {
             heroTitle: sbSettings?.heroTitle || prev.heroTitle,
             heroSubtitle: sbSettings?.heroSubtitle || prev.heroSubtitle,
             heroCtaText: sbSettings?.heroCtaText || prev.heroCtaText,
             heroImage: resolvedHeroImg,
             brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
             lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
-            categories: Array.isArray(sbCategories) ? sbCategories : prev.categories,
-            products: Array.isArray(sbProducts) ? sbProducts : prev.products,
+            categories: Array.isArray(sbCategories) && sbCategories.length > 0 ? sbCategories : prev.categories,
+            products: sbProducts,
           };
+          saveLocalCache(updated);
+          return updated;
         });
+      } else if (sbProducts === null) {
+        console.warn('Supabase query unavailable or quota restricted; serving cached catalog.');
       }
     } catch (err) {
       console.warn('Supabase fetch error:', err);
@@ -147,7 +196,7 @@ export function SiteDataProvider({
     }
   }, []);
 
-  // Fetch on mount to ensure freshness
+  // Fetch on mount (throttled)
   useEffect(() => {
     loadSupabaseData();
   }, [loadSupabaseData]);
@@ -197,6 +246,7 @@ export function SiteDataProvider({
         });
 
         const updatedData = { ...prev, products: updatedProducts };
+        saveLocalCache(updatedData);
 
         try {
           if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -242,6 +292,7 @@ export function SiteDataProvider({
         ? prev.products.map((p) => (p.id === product.id ? product : p))
         : [product, ...prev.products];
       const updatedData = { ...prev, products: updatedProducts };
+      saveLocalCache(updatedData);
 
       try {
         if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -268,9 +319,9 @@ export function SiteDataProvider({
   }, []);
 
   // Save changes (from Admin Dashboard): updates state, broadcasts to tabs, pushes directly to Supabase.
-  // NO LOCAL STORAGE SAVED FOR PRODUCTS/CATEGORIES! (Only cart uses localStorage)
   const saveData = useCallback((newData: SiteData) => {
     setData(newData);
+    saveLocalCache(newData);
 
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
