@@ -45,30 +45,30 @@ export default function MobileMenu({ open, onClose }: Props) {
 
         <ul className={styles.navList}>
           <li>
-            <a href="/" className={styles.navLink} onClick={onClose}>
+            <Link href="/" className={styles.navLink} onClick={onClose}>
               Accueil
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="/boutique" className={styles.navLink} onClick={onClose}>
+            <Link href="/boutique" className={styles.navLink} onClick={onClose}>
               Toute la Collection
-            </a>
+            </Link>
           </li>
           {categories && categories.length > 0 && categories.map((cat) => (
             <li key={cat.id}>
-              <a
+              <Link
                 href={`/boutique?cat=${encodeURIComponent(cat.name)}`}
                 className={styles.navLink}
                 onClick={onClose}
               >
                 {cat.name}
-              </a>
+              </Link>
             </li>
           ))}
           <li>
-            <a href="/panier" className={styles.navLink} onClick={onClose}>
+            <Link href="/panier" className={styles.navLink} onClick={onClose}>
               Mon Panier
-            </a>
+            </Link>
           </li>
         </ul>
 
