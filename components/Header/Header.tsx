@@ -104,7 +104,7 @@ export default function Header() {
         )}
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      {mounted && <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />}
     </>
   );
 }

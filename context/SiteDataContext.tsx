@@ -101,45 +101,40 @@ export function SiteDataProvider({
   children: React.ReactNode;
   initialData?: Partial<SiteData>;
 }) {
-  const [data, setData] = useState<SiteData>(() => {
-    // 1. Prioritize initialData if provided and non-empty
-    if (initialData?.products && Array.isArray(initialData.products) && initialData.products.length > 0) {
-      return {
-        ...defaultSiteData,
-        ...initialData,
-      };
-    }
-    // 2. Client-side persistent cache fallback
-    const cached = getLocalCache();
-    if (cached?.products && cached.products.length > 0) {
-      return {
-        ...defaultSiteData,
-        ...cached,
-      };
-    }
-    // 3. Fallback to empty real catalog (NO mock products)
-    return {
-      ...defaultSiteData,
-      ...initialData,
-      products: [],
-      categories: [],
-    };
+  const [data, setData] = useState<SiteData>(() => ({
+    ...defaultSiteData,
+    ...initialData,
+    products: initialData?.products && Array.isArray(initialData.products) ? initialData.products : [],
+    categories: initialData?.categories && Array.isArray(initialData.categories) ? initialData.categories : [],
+  }));
+
+  const [isLoaded, setIsLoaded] = useState<boolean>(() => {
+    return Boolean(
+      (initialData?.products && initialData.products.length > 0) ||
+      (initialData?.categories && initialData.categories.length > 0)
+    );
   });
 
-  const [isLoaded, setIsLoaded] = useState<boolean>(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(isSupabaseConfigured());
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Client hydration: read from local cache if initial render was from SSR fallback
+  // Client hydration: read from local cache strictly after mount to prevent SSR mismatch
   useEffect(() => {
     const cached = getLocalCache();
-    if (cached && cached.products && cached.products.length > 0) {
+    if (cached) {
       setData((prev) => {
-        if (!prev.products || prev.products.length === 0) {
-          return { ...prev, ...cached };
+        const needsProducts = !prev.products || prev.products.length === 0;
+        const needsCategories = !prev.categories || prev.categories.length === 0;
+        if (needsProducts || needsCategories) {
+          return {
+            ...prev,
+            products: needsProducts && cached.products ? cached.products : prev.products,
+            categories: needsCategories && cached.categories ? cached.categories : prev.categories,
+          };
         }
         return prev;
       });
+      setIsLoaded(true);
     }
   }, []);
 

@@ -354,7 +354,7 @@ export async function fetchSiteSettingsFromSupabase(): Promise<Partial<SiteData>
       .from('site_settings')
       .select('*')
       .eq('id', 'default')
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.warn('Supabase fetchSiteSettings error:', error.message);
