@@ -14,9 +14,9 @@ interface SiteData {
   lookbookPhotos?: string[];
 }
 
-const DEFAULT_SUPABASE_URL = 'https://mrgekwriowpksuwnkgto.supabase.co';
+const DEFAULT_SUPABASE_URL = 'https://poswtkarskyouacsjfct.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yZ2Vrd3Jpb3dwa3N1d25rZ3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwOTA5MjgsImV4cCI6MjEwMzY2NjkyOH0.yj5TD1NEHeTq66HD49AzrLHJZ2xhW3N9TW2FiJZIt4I';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvc3d0a2Fyc2t5b3VhY3NqZmN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNDc2ODUsImV4cCI6MjEwNTYyMzY4NX0.YD4j5e7WoPflFDdNqL3okTCJ9sqJyQh6lvMJ1FheJDg';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
