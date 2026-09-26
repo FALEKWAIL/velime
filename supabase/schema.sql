@@ -91,3 +91,35 @@ CREATE POLICY "Anon Full Access Categories" ON public.categories FOR ALL USING (
 CREATE POLICY "Anon Full Access Products" ON public.products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Anon Full Access Site Settings" ON public.site_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Anon Full Access Orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- 5. SUPABASE STORAGE (BUCKET VELIME-MEDIA)
+-- Stockage public des photos produits, catégories et bannières
+-- ============================================================
+
+-- Création du bucket public velime-media
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('velime-media', 'velime-media', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Politiques de sécurité Storage (lecture publique, écriture avec clé anon/auth)
+DROP POLICY IF EXISTS "Velime Public Storage Select" ON storage.objects;
+CREATE POLICY "Velime Public Storage Select"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'velime-media');
+
+DROP POLICY IF EXISTS "Velime Public Storage Insert" ON storage.objects;
+CREATE POLICY "Velime Public Storage Insert"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'velime-media');
+
+DROP POLICY IF EXISTS "Velime Public Storage Update" ON storage.objects;
+CREATE POLICY "Velime Public Storage Update"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'velime-media');
+
+DROP POLICY IF EXISTS "Velime Public Storage Delete" ON storage.objects;
+CREATE POLICY "Velime Public Storage Delete"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'velime-media');
+

@@ -157,21 +157,10 @@ export async function fetchProductBySlugFromSupabase(slugOrId: string): Promise<
       return mapDbToProduct(data[0]);
     }
 
-    // Fallback: fetch all and find in memory to handle any special character nuances
-    const { data: allData } = await supabase
-      .from('products')
-      .select('*');
-
-    if (allData && allData.length > 0) {
-      const match = allData.find((p) => {
-        const pSlug = (p.slug || '').toLowerCase().trim();
-        const pId = (p.id || '').toLowerCase().trim();
-        return pSlug === decoded || pId === decoded || pSlug === raw.toLowerCase() || pId === raw.toLowerCase();
-      });
-      if (match) {
-        return mapDbToProduct(match);
-      }
-    }
+    // NOTE: No full-table fallback here — the old code fetched ALL products
+    // into memory just to find one slug. This was a massive bandwidth drain
+    // on every product page visit. The .or() query above handles all
+    // reasonable slug/id formats. If a product truly isn't found, return null.
 
     return null;
   } catch (err) {
@@ -510,3 +499,69 @@ export async function syncAllToSupabase(siteData: SiteData): Promise<{ success: 
     };
   }
 }
+
+/**
+ * Uploads an image (Blob or File) to the Supabase Storage bucket 'velime-media'.
+ * Automatically sets long-term CDN caching and returns the public CDN URL.
+ */
+export async function uploadImageToSupabaseStorage(
+  fileOrBlob: Blob | File,
+  folder: 'products' | 'categories' | 'hero' | 'lookbook' = 'products',
+  originalFileName?: string
+): Promise<{ success: boolean; url: string; error?: string }> {
+  if (!supabase) {
+    return { success: false, url: '', error: "Supabase n'est pas configuré" };
+  }
+
+  try {
+    const bucketName = 'velime-media';
+    const isWebp = fileOrBlob.type.includes('webp');
+    const isPng = fileOrBlob.type.includes('png');
+    const ext = isWebp ? 'webp' : isPng ? 'png' : 'jpg';
+
+    // Sanitize filename and create unique timestamped key
+    const rawName = (originalFileName || 'image')
+      .toLowerCase()
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-z0-9_-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 30);
+
+    const timestamp = Date.now();
+    const filePath = `${folder}/${timestamp}-${rawName}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, fileOrBlob, {
+        cacheControl: '31536000', // 1 year CDN cache
+        upsert: true,
+        contentType: fileOrBlob.type || 'image/webp',
+      });
+
+    if (uploadError) {
+      console.warn('Supabase Storage upload error:', uploadError.message);
+      return { success: false, url: '', error: uploadError.message };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    if (!publicUrlData?.publicUrl) {
+      return { success: false, url: '', error: "Impossible de générer l'URL publique" };
+    }
+
+    return {
+      success: true,
+      url: publicUrlData.publicUrl,
+    };
+  } catch (err: any) {
+    console.error('Supabase Storage upload exception:', err);
+    return {
+      success: false,
+      url: '',
+      error: err.message || "Erreur lors de l'envoi vers Supabase Storage",
+    };
+  }
+}
+

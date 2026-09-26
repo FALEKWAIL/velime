@@ -11,7 +11,7 @@ import {
   computeStockStatusFromMatrix,
 } from '@/data/products';
 import { useOrders } from '@/hooks/useOrders';
-import { deleteCategoryFromSupabase, deleteProductFromSupabase } from '@/lib/supabase';
+import { deleteCategoryFromSupabase, deleteProductFromSupabase, uploadImageToSupabaseStorage } from '@/lib/supabase';
 import { sendOrderNotification } from '@/lib/notifications';
 import styles from './admin.module.css';
 
@@ -353,57 +353,107 @@ ${itemsText}
   };
 
   const [heroDragActive, setHeroDragActive] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const processImageFile = (file: File, callback: (dataUrl: string) => void) => {
+  const processImageFile = async (
+    file: File,
+    folder: 'products' | 'categories' | 'hero' | 'lookbook',
+    callback: (finalUrl: string) => void
+  ) => {
     if (!file.type.startsWith('image/')) {
       alert('Veuillez sélectionner un fichier image valide (JPG, PNG, WEBP).');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const rawUrl = e.target?.result as string;
-      if (!rawUrl) return;
 
-      const img = document.createElement('img');
-      img.onload = () => {
-        const maxWidth = 1400;
-        const maxHeight = 1400;
-        let { width, height } = img;
+    setIsUploadingImage(true);
 
-        if (width > maxWidth || height > maxHeight) {
-          if (width > height) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
+    try {
+      // 1. Read and load image into HTML5 Image element
+      const rawUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.82);
-          callback(compressed);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = document.createElement('img');
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = rawUrl;
+      });
+
+      // 2. Downscale to max 1400px bounds to optimize memory
+      const maxWidth = 1400;
+      const maxHeight = 1400;
+      let { width, height } = img;
+
+      if (width > maxWidth || height > maxHeight) {
+        if (width > height) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
         } else {
-          callback(rawUrl);
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
         }
-      };
-      img.onerror = () => callback(rawUrl);
-      img.src = rawUrl;
-    };
-    reader.readAsDataURL(file);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+      }
+
+      // 3. Compress to modern high-efficiency WebP blob
+      let webpBlob: Blob | null = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.82);
+      });
+
+      if (!webpBlob) {
+        webpBlob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.82);
+        });
+      }
+
+      // Local fallback data URL
+      const localDataUrl = canvas.toDataURL('image/webp', 0.82);
+
+      // 4. Try uploading to Supabase Storage bucket 'velime-media'
+      if (webpBlob) {
+        const uploadResult = await uploadImageToSupabaseStorage(
+          webpBlob,
+          folder,
+          file.name
+        );
+
+        if (uploadResult.success && uploadResult.url) {
+          showNotification('Photo téléversée sur le CDN Supabase (0 octet en base) ! 🚀');
+          callback(uploadResult.url);
+          return;
+        } else {
+          console.warn('Supabase Storage notice:', uploadResult.error);
+        }
+      }
+
+      // Fallback: If bucket is not yet created or offline, use compressed WebP data URL
+      showNotification('Photo compressée en WebP.');
+      callback(localDataUrl || rawUrl);
+    } catch (err) {
+      console.error('Erreur traitement image:', err);
+      alert("Erreur lors du traitement de l'image.");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleHeroFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processImageFile(file, (dataUrl) => {
+      processImageFile(file, 'hero', (finalUrl) => {
         setHeroFormDirty(true);
-        setHeroForm((h) => ({ ...h, image: dataUrl }));
+        setHeroForm((h) => ({ ...h, image: finalUrl }));
         showNotification('Photo de fond chargée ! Cliquez sur « Enregistrer la page d\'accueil » pour valider.');
       });
     }
@@ -414,33 +464,34 @@ ${itemsText}
     setHeroDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      processImageFile(file, (dataUrl) => {
+      processImageFile(file, 'hero', (finalUrl) => {
         setHeroFormDirty(true);
-        setHeroForm((h) => ({ ...h, image: dataUrl }));
+        setHeroForm((h) => ({ ...h, image: finalUrl }));
         showNotification('Photo de fond chargée ! Cliquez sur « Enregistrer la page d\'accueil » pour valider.');
       });
     }
   };
 
-  const handleProductFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProductFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      processImageFile(file, (dataUrl) => {
+    const fileList = Array.from(files);
+    for (const file of fileList) {
+      await processImageFile(file, 'products', (finalUrl) => {
         setProdForm((prev) => ({
           ...prev,
-          images: [...prev.images, dataUrl],
-          image: prev.images.length === 0 ? dataUrl : prev.image,
+          images: [...prev.images, finalUrl],
+          image: prev.images.length === 0 ? finalUrl : prev.image,
         }));
       });
-    });
+    }
   };
 
   const handleCategoryFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processImageFile(file, (dataUrl) => {
-        setCatForm((c) => ({ ...c, image: dataUrl }));
+      processImageFile(file, 'categories', (finalUrl) => {
+        setCatForm((c) => ({ ...c, image: finalUrl }));
       });
     }
   };
@@ -457,27 +508,29 @@ ${itemsText}
     }
   }, [lookbookPhotos]);
 
-  const handleAddLookbookPhotoFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddLookbookPhotoFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      processImageFile(file, (dataUrl) => {
-        setLookbookList((prev) => [...prev, dataUrl]);
+    const fileList = Array.from(files);
+    for (const file of fileList) {
+      await processImageFile(file, 'lookbook', (finalUrl) => {
+        setLookbookList((prev) => [...prev, finalUrl]);
       });
-    });
+    }
     showNotification('Photos ajoutées ! Pensez à enregistrer.');
   };
 
-  const handleLookbookDrop = (e: React.DragEvent) => {
+  const handleLookbookDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setLookbookDragActive(false);
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      processImageFile(file, (dataUrl) => {
-        setLookbookList((prev) => [...prev, dataUrl]);
+    const fileList = Array.from(files);
+    for (const file of fileList) {
+      await processImageFile(file, 'lookbook', (finalUrl) => {
+        setLookbookList((prev) => [...prev, finalUrl]);
       });
-    });
+    }
     showNotification('Photos ajoutées ! Pensez à enregistrer.');
   };
 
@@ -2106,14 +2159,15 @@ ${itemsText}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={heroForm.image} alt="Aperçu Bannière" className={styles.uploadedHeroImg} />
                           <div className={styles.uploadedOverlayActions}>
-                            <label className={styles.uploadBtnOverlay}>
+                            <label className={styles.uploadBtnOverlay} style={isUploadingImage ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
                               <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleHeroFileUpload}
                                 style={{ display: 'none' }}
+                                disabled={isUploadingImage}
                               />
-                              <span>📷 Changer la photo</span>
+                              <span>{isUploadingImage ? '⏳ Envoi CDN...' : '📷 Changer la photo'}</span>
                             </label>
                             <button
                               type="button"
@@ -2125,17 +2179,18 @@ ${itemsText}
                           </div>
                         </div>
                       ) : (
-                        <label className={styles.dropzoneLabel}>
+                        <label className={styles.dropzoneLabel} style={isUploadingImage ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
                           <input
                             type="file"
                             accept="image/*"
                             onChange={handleHeroFileUpload}
                             style={{ display: 'none' }}
+                            disabled={isUploadingImage}
                           />
                           <div className={styles.dropzoneContent}>
                             <UploadIcon />
                             <p className={styles.dropzoneMainText}>
-                              Cliquez pour choisir une photo ou glissez-déposez ici
+                              {isUploadingImage ? '⏳ Téléversement vers le CDN Supabase...' : 'Cliquez pour choisir une photo ou glissez-déposez ici'}
                             </p>
                             <span className={styles.dropzoneSubText}>JPG, PNG, WEBP acceptés</span>
                           </div>
@@ -2229,18 +2284,21 @@ ${itemsText}
                   onDragLeave={() => setLookbookDragActive(false)}
                   onDrop={handleLookbookDrop}
                 >
-                  <label className={styles.dropzoneLabel}>
+                  <label className={styles.dropzoneLabel} style={isUploadingImage ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
                     <input
                       type="file"
                       multiple
                       accept="image/*"
                       onChange={handleAddLookbookPhotoFiles}
                       style={{ display: 'none' }}
+                      disabled={isUploadingImage}
                     />
                     <div className={styles.dropzoneContent}>
                       <UploadIcon />
                       <p className={styles.dropzoneMainText}>
-                        📁 Télécharger vos photos depuis votre téléphone / ordinateur
+                        {isUploadingImage
+                          ? '⏳ Envoi des photos vers le CDN Supabase...'
+                          : '📁 Télécharger vos photos depuis votre téléphone / ordinateur'}
                       </p>
                       <span className={styles.dropzoneSubText}>
                         Sélectionnez une ou plusieurs photos (JPG, PNG, WEBP) ou glissez-les ici
@@ -3067,16 +3125,21 @@ ${itemsText}
                 )}
 
                 <div className={styles.addImageRow}>
-                  <label className={styles.directUploadBtn}>
+                  <label className={styles.directUploadBtn} style={isUploadingImage ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
                     <input
                       type="file"
                       multiple
                       accept="image/*"
                       onChange={handleProductFilesUpload}
                       style={{ display: 'none' }}
+                      disabled={isUploadingImage}
                     />
                     <UploadIcon />
-                    <span>📁 Télécharger des photos depuis l&apos;appareil (Téléphone / Ordinateur)</span>
+                    <span>
+                      {isUploadingImage
+                        ? '⏳ Envoi vers le CDN Supabase en cours...'
+                        : '📁 Télécharger des photos depuis l\'appareil (Téléphone / Ordinateur)'}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -3184,15 +3247,20 @@ ${itemsText}
                       <span>📷 Aucune photo sélectionnée</span>
                     </div>
                   )}
-                  <label className={styles.directUploadBtn}>
+                  <label className={styles.directUploadBtn} style={isUploadingImage ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleCategoryFileUpload}
                       style={{ display: 'none' }}
+                      disabled={isUploadingImage}
                     />
                     <UploadIcon />
-                    <span>📁 {catForm.image ? 'Changer la photo' : 'Télécharger une photo depuis l\'appareil'}</span>
+                    <span>
+                      {isUploadingImage
+                        ? '⏳ Envoi vers le CDN Supabase...'
+                        : `📁 ${catForm.image ? 'Changer la photo' : "Télécharger une photo depuis l'appareil"}`}
+                    </span>
                   </label>
                 </div>
               </div>

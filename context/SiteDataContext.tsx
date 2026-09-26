@@ -96,7 +96,7 @@ const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined
 
 export function SiteDataProvider({
   children,
-  initialData,
+  initialData = {},
 }: {
   children: React.ReactNode;
   initialData?: Partial<SiteData>;
@@ -146,9 +146,10 @@ export function SiteDataProvider({
       return;
     }
 
-    // Throttle: don't re-query Supabase more than once every 10 minutes unless forced
+    // Throttle: don't re-query Supabase more than once every 30 minutes unless forced
+    // This reduces Vercel origin transfer by ~3x compared to the old 10-minute window
     const now = Date.now();
-    if (!force && lastFetchTime > 0 && now - lastFetchTime < 10 * 60 * 1000) {
+    if (!force && lastFetchTime > 0 && now - lastFetchTime < 30 * 60 * 1000) {
       return;
     }
 
@@ -268,10 +269,9 @@ export function SiteDataProvider({
         if (ok) setIsSupabaseConnected(true);
       }
 
-      // 3. Purge Vercel Edge cache so public site shows changes immediately
-      try {
-        fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
-      } catch {}
+      // NOTE: No /api/revalidate call — the site is fully client-rendered,
+      // so there is no Vercel Edge cache to purge. Changes appear instantly
+      // via BroadcastChannel and on next client-side Supabase refresh.
 
       return ok;
     },
@@ -305,10 +305,6 @@ export function SiteDataProvider({
       if (ok) setIsSupabaseConnected(true);
     }
 
-    try {
-      fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
-    } catch {}
-
     return ok;
   }, []);
 
@@ -335,9 +331,6 @@ export function SiteDataProvider({
         });
     }
 
-    try {
-      fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
-    } catch {}
   }, []);
 
   const triggerSupabaseSync = useCallback(async () => {

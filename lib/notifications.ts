@@ -110,32 +110,30 @@ export async function sendOrderNotification(
 
     let sent = false;
 
-    // 1. Primary: Server API Route (/api/notify)
-    if (typeof window !== 'undefined') {
+    // 1. Primary: Direct client-side fetch to ntfy.sh (zero Vercel origin transfer)
+    try {
+      const res = await fetch('https://ntfy.sh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ntfyPayload),
+      });
+      if (res.ok) {
+        sent = true;
+      }
+    } catch (err) {
+      console.warn('Direct ntfy error, falling back to server route:', err);
+    }
+
+    // 2. Fallback: Server API Route (/api/notify) ONLY if direct failed
+    if (!sent && typeof window !== 'undefined') {
       try {
-        const res = await fetch('/api/notify', {
+        await fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order, topic, origin }),
         });
-        if (res.ok) {
-          sent = true;
-        }
       } catch (err) {
-        console.warn('Server notify route error, falling back to direct ntfy:', err);
-      }
-    }
-
-    // 2. Fallback: Direct client-side fetch ONLY if server route failed
-    if (!sent) {
-      try {
-        await fetch('https://ntfy.sh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ntfyPayload),
-        });
-      } catch (err) {
-        console.warn('Direct ntfy error:', err);
+        console.warn('Server notify route also failed:', err);
       }
     }
   } catch (err) {
