@@ -34,7 +34,7 @@ export default function AdminPage() {
     saveSingleProduct,
   } = useSiteData();
 
-  const { orders, updateStatus, removeOrder } = useOrders();
+  const { orders, updateStatus, removeOrder } = useOrders({ autoSync: true });
   
   const [authed, setAuthed] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');

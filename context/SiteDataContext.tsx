@@ -49,6 +49,8 @@ export const defaultSiteData: SiteData = {
   ],
 };
 
+export const SITE_CACHE_TIME_KEY = 'velime-site-data-time';
+
 function getLocalCache(): Partial<SiteData> | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -62,14 +64,25 @@ function getLocalCache(): Partial<SiteData> | null {
   return null;
 }
 
+function getLocalCacheTime(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = localStorage.getItem(SITE_CACHE_TIME_KEY);
+    return raw ? parseInt(raw, 10) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function saveLocalCache(newData: SiteData) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(SITE_CACHE_KEY, JSON.stringify(newData));
+    localStorage.setItem(SITE_CACHE_TIME_KEY, Date.now().toString());
   } catch {}
 }
 
-let lastFetchTime = 0;
+let inFlightFetchPromise: Promise<void> | null = null;
 
 export interface SiteDataContextType extends SiteData {
   isLoaded: boolean;
@@ -146,49 +159,66 @@ export function SiteDataProvider({
       return;
     }
 
-    // Throttle: don't re-query Supabase more than once every 30 minutes unless forced
-    // This reduces Vercel origin transfer by ~3x compared to the old 10-minute window
+    // High traffic optimization 1: If a fetch is already in flight, reuse it
+    if (inFlightFetchPromise) {
+      return inFlightFetchPromise;
+    }
+
+    // High traffic optimization 2: If local cache is fresh (< 15 mins), do not query Supabase!
+    // Returning visitors and multi-tab users will load 100% instantly with 0 database load.
     const now = Date.now();
-    if (!force && lastFetchTime > 0 && now - lastFetchTime < 30 * 60 * 1000) {
-      return;
-    }
+    const cacheAge = now - getLocalCacheTime();
+    const CACHE_FRESH_TTL = 15 * 60 * 1000; // 15 minutes
 
-    try {
-      setIsSyncing(true);
-      const [sbProducts, sbCategories, sbSettings] = await Promise.all([
-        fetchProductsFromSupabase(),
-        fetchCategoriesFromSupabase(),
-        fetchSiteSettingsFromSupabase(),
-      ]);
-
-      if (sbProducts !== null && Array.isArray(sbProducts) && sbProducts.length > 0) {
-        lastFetchTime = Date.now();
+    if (!force && cacheAge < CACHE_FRESH_TTL) {
+      const cached = getLocalCache();
+      if (cached && Array.isArray(cached.products) && cached.products.length > 0) {
+        setIsLoaded(true);
         setIsSupabaseConnected(true);
-
-        setData((prev) => {
-          const resolvedHeroImg = sbSettings?.heroImage || prev.heroImage || defaultSiteData.heroImage;
-          const updated: SiteData = {
-            heroTitle: sbSettings?.heroTitle || prev.heroTitle,
-            heroSubtitle: sbSettings?.heroSubtitle || prev.heroSubtitle,
-            heroCtaText: sbSettings?.heroCtaText || prev.heroCtaText,
-            heroImage: resolvedHeroImg,
-            brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
-            lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
-            categories: Array.isArray(sbCategories) && sbCategories.length > 0 ? sbCategories : prev.categories,
-            products: sbProducts,
-          };
-          saveLocalCache(updated);
-          return updated;
-        });
-      } else if (sbProducts === null) {
-        console.warn('Supabase query unavailable or quota restricted; serving cached catalog.');
+        return;
       }
-    } catch (err) {
-      console.warn('Supabase fetch error:', err);
-    } finally {
-      setIsSyncing(false);
-      setIsLoaded(true);
     }
+
+    inFlightFetchPromise = (async () => {
+      try {
+        setIsSyncing(true);
+        const [sbProducts, sbCategories, sbSettings] = await Promise.all([
+          fetchProductsFromSupabase(),
+          fetchCategoriesFromSupabase(),
+          fetchSiteSettingsFromSupabase(),
+        ]);
+
+        if (sbProducts !== null && Array.isArray(sbProducts) && sbProducts.length > 0) {
+          setIsSupabaseConnected(true);
+
+          setData((prev) => {
+            const resolvedHeroImg = sbSettings?.heroImage || prev.heroImage || defaultSiteData.heroImage;
+            const updated: SiteData = {
+              heroTitle: sbSettings?.heroTitle || prev.heroTitle,
+              heroSubtitle: sbSettings?.heroSubtitle || prev.heroSubtitle,
+              heroCtaText: sbSettings?.heroCtaText || prev.heroCtaText,
+              heroImage: resolvedHeroImg,
+              brands: sbSettings?.brands && sbSettings.brands.length > 0 ? sbSettings.brands : prev.brands,
+              lookbookPhotos: sbSettings?.lookbookPhotos && sbSettings.lookbookPhotos.length > 0 ? sbSettings.lookbookPhotos : prev.lookbookPhotos,
+              categories: Array.isArray(sbCategories) && sbCategories.length > 0 ? sbCategories : prev.categories,
+              products: sbProducts,
+            };
+            saveLocalCache(updated);
+            return updated;
+          });
+        } else if (sbProducts === null) {
+          console.warn('Supabase query unavailable or quota restricted; serving cached catalog.');
+        }
+      } catch (err) {
+        console.warn('Supabase fetch error:', err);
+      } finally {
+        setIsSyncing(false);
+        setIsLoaded(true);
+        inFlightFetchPromise = null;
+      }
+    })();
+
+    return inFlightFetchPromise;
   }, []);
 
   // Fetch on mount (throttled)

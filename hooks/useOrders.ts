@@ -9,7 +9,8 @@ import {
 } from '@/lib/orders';
 import { supabase } from '@/lib/supabase';
 
-export function useOrders() {
+export function useOrders(options: { autoSync?: boolean } = {}) {
+  const { autoSync = false } = options;
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,7 +59,11 @@ export function useOrders() {
 
   useEffect(() => {
     loadOrders();
-    syncSupabaseOrders();
+    // Only admin dashboard queries all customer orders from Supabase.
+    // Regular visitors and checkout forms only create orders, saving thousands of queries.
+    if (autoSync) {
+      syncSupabaseOrders();
+    }
 
     const handleUpdate = () => {
       loadOrders();
@@ -71,7 +76,7 @@ export function useOrders() {
       window.removeEventListener('velime-orders-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
-  }, [loadOrders, syncSupabaseOrders]);
+  }, [loadOrders, syncSupabaseOrders, autoSync]);
 
   const placeOrder = async (orderPayload: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'status'>) => {
     const created = await createOrderLib(orderPayload);
