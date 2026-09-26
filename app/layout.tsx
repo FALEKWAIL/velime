@@ -9,10 +9,17 @@ import Footer from '@/components/Footer/Footer';
 import WhatsAppFAB from '@/components/WhatsAppFAB/WhatsAppFAB';
 import BackToTop from '@/components/BackToTop/BackToTop';
 import AdminSwitchBar from '@/components/AdminSwitchBar/AdminSwitchBar';
+import {
+  fetchProductsFromSupabase,
+  fetchCategoriesFromSupabase,
+  fetchSiteSettingsFromSupabase,
+} from '@/lib/supabase';
+import { SiteData } from '@/context/SiteDataContext';
 
-// STATIC layout — zero ISR, zero serverless invocations.
-// All data is fetched client-side by SiteDataProvider (direct Supabase calls
-// that bypass Vercel origin entirely). This keeps Fast Origin Transfer at ~0.
+// STATIC layout — with force-static, Next.js executes this ONCE at build time.
+// The products and categories are baked directly into the static HTML files,
+// meaning visitors see the entire catalog in 0 milliseconds without waiting for
+// client-side network calls! With NO revalidate timer, Fast Origin Transfer remains ~0.
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
@@ -27,15 +34,40 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let initialData: Partial<SiteData> = {};
+
+  try {
+    const [products, categories, settings] = await Promise.all([
+      fetchProductsFromSupabase(),
+      fetchCategoriesFromSupabase(),
+      fetchSiteSettingsFromSupabase(),
+    ]);
+
+    if (products && products.length > 0) {
+      initialData = {
+        products,
+        categories: categories || [],
+        heroTitle: settings?.heroTitle,
+        heroSubtitle: settings?.heroSubtitle,
+        heroCtaText: settings?.heroCtaText,
+        heroImage: settings?.heroImage,
+        brands: settings?.brands,
+        lookbookPhotos: settings?.lookbookPhotos,
+      };
+    }
+  } catch (err) {
+    console.warn('Build-time static catalog prefetch note:', err);
+  }
+
   return (
     <html lang="fr">
       <body>
-        <SiteDataProvider>
+        <SiteDataProvider initialData={initialData}>
           <CartProvider>
             <AnnouncementBar />
             <Header />
